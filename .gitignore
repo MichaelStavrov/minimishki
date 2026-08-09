@@ -1,0 +1,33 @@
+# Зависимости
+node_modules/
+.pnpm-store/
+
+# Сборки
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Кеши инструментов
+.turbo/
+.eslintcache
+.cache/
+
+# Переменные окружения (секреты не коммитим!)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Prisma — сгенерированный клиент
+node_modules/.prisma/
+apps/api/generated/
+
+# Логи
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
