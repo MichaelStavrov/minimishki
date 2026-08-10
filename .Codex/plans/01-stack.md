@@ -6,6 +6,7 @@
 |---|---|
 | Монорепо | pnpm 10.x workspaces + Turborepo 2.x |
 | Frontend | **Next.js 16** (App Router), TypeScript, Tailwind CSS v4, shadcn/ui |
+| Архитектура frontend | **Feature-Sliced Design** — см. [`02-structure.md`](./02-structure.md#почему-фронтенд-на-fsd) |
 | Слой данных | Server Components + `fetch` для публичных страниц; TanStack Query v5 для интерактива |
 | Backend | Nest.js 11, ValidationPipe (class-validator), ConfigModule с zod-валидацией env |
 | Аутентификация | JWT + Passport, guards, роли `ADMIN` / `MANAGER` / `USER` |
@@ -26,6 +27,9 @@
 - husky + lint-staged
 - commitlint (Conventional Commits)
 - Jest / тесты
+- **Steiger** — официальный линтер FSD. Правила импортов между слоями закрыты
+  через `import/no-restricted-paths` в общем ESLint-конфиге; отдельный инструмент
+  со своей командой пока избыточен
 
 ### Обоснование ключевых выборов
 
@@ -88,7 +92,7 @@
 > (аргумент со слеша может превратиться в `C:/Program Files/Git/...` — лечится
 > удвоением слеша или `MSYS_NO_PATHCONV=1`) и необходимость `winpty`
 > для интерактивных программ вроде `docker exec -it` и `psql`.
-> Полный список — в глобальном `C:\Users\mihal\.claude\CLAUDE.md`, п. 10.
+> Полный список — в глобальном `C:\Users\mihal\.Codex\AGENTS.md`, п. 10.
 
 ---
 

@@ -65,6 +65,12 @@
 ### Шаг 7. `packages/eslint-config`
 `base.js`, `next.js`, `nest.js` + `package.json` (flat config).
 
+> В `next.js` — правило **`import/no-restricted-paths`** с зонами по слоям FSD:
+> слой может импортировать только слои строго ниже себя
+> (`_app` → `_pages` → `widgets` → `features` → `entities` → `shared`).
+> Так архитектура проверяется на `pnpm lint`, а не держится на дисциплине.
+> Раскладка слоёв — в [`02-structure.md`](./02-structure.md#почему-фронтенд-на-fsd).
+
 ### Шаг 8. `packages/shared`
 `package.json`, `tsconfig.json`, `src/index.ts`, `src/enums.ts`, `src/dto/`.
 
@@ -267,10 +273,23 @@ pnpm db:seed
 
 ## Этап G. Frontend
 
-> Frontend — **краткие** пояснения.
+> Этап G — **подробные** пояснения: он целиком про Next.js, Tailwind, shadcn/ui и FSD,
+> а это технологии из списка «опыта мало» (п.6 глобального `AGENTS.md`).
+> Кратко — только там, где код сводится к обычному React и TypeScript.
+
+> **Весь этап G — по Feature-Sliced Design.** Роутинг Next.js лежит в `apps/web/app/`
+> (в корне приложения), архитектура — в `apps/web/src/`. Слои `app` и `pages`
+> переименованы в `_app` и `_pages`, иначе конфликт с App Router.
+> Раскладка — [`02-structure.md`](./02-structure.md#почему-фронтенд-на-fsd),
+> правила — [`07-conventions.md`](./07-conventions.md#архитектура--feature-sliced-design).
 
 ### Шаг 21. Конфиги `apps/web`
 `package.json` (**Next.js 16**) + `tsconfig.json` + `next.config.ts` + `eslint.config.mjs`.
+
+В `tsconfig.json` алиас `@/*` → `./src/*`.
+
+> ⚠️ Папку `src/app/` **не создаём** — Next.js принял бы её за App Router.
+> Роутинг живёт в `apps/web/app/`, слой инициализации — в `apps/web/src/_app/`.
 
 ### 🔧 КТ-4. Установка зависимостей frontend
 
@@ -279,40 +298,61 @@ pnpm install
 ```
 
 ### Шаг 22. Tailwind v4
-`postcss.config.mjs` + `src/app/globals.css`.
+`postcss.config.mjs` + `src/_app/styles/globals.css`.
 
 Tailwind v4 настраивается **через CSS**, без `tailwind.config.ts`:
 `@import "tailwindcss"` + блок `@theme` с палитрой детского центра
 (тёплые, яркие цвета) и радиусами.
 
 ### Шаг 23. shadcn/ui
-`components.json` (стиль `new-york`, алиасы `@/components`, `@/lib/utils`) +
-`src/lib/utils.ts` (`cn()` — clsx + tailwind-merge).
+`components.json` (стиль `new-york`) + `src/shared/lib/cn.ts` (`cn()` — clsx + tailwind-merge).
+
+Алиасы направлены в слой `shared`, иначе CLI разложит компоненты
+в `src/components/ui` мимо архитектуры:
+
+```json
+"aliases": {
+  "components": "@/shared/ui",
+  "ui": "@/shared/ui",
+  "lib": "@/shared/lib",
+  "utils": "@/shared/lib/cn",
+  "hooks": "@/shared/lib/hooks"
+}
+```
 
 **Проверить:**
 ```bash
 cd apps/web && pnpm dlx shadcn@latest add button && cd ../..
 ```
-Компонент появился в `apps/web/src/components/ui/button.tsx`.
+Компонент появился в `apps/web/src/shared/ui/button.tsx`.
 
 > Если `pnpm dlx` в git bash не находит бинарник — запустить через
 > `node ./node_modules/.bin/shadcn add button`.
 
 ### Шаг 24. API-клиент
-`src/lib/api.ts` — обёртка над `fetch`: базовый URL из `NEXT_PUBLIC_API_URL`,
-дженерик-возврат, обработка не-2xx. Используется и в Server Components, и в TanStack Query.
+`src/shared/api/` — обёртка над `fetch`: базовый URL из `NEXT_PUBLIC_API_URL`,
+дженерик-возврат, обработка не-2xx. Плюс `index.ts` — публичный API сегмента.
+Используется и в Server Components, и в TanStack Query.
 
 ### Шаг 25. Провайдеры
-`src/app/providers.tsx` — `'use client'`, `QueryClient` создаётся в `useState`,
+`src/_app/providers.tsx` — `'use client'`, `QueryClient` создаётся в `useState`,
 чтобы не шарился между запросами.
 
 ### Шаг 26. Root layout
-`src/app/layout.tsx` — `lang="ru"`, метаданные (`title: "Минимишки — детский центр"`),
-подключение шрифтов и `Providers`.
+`app/layout.tsx` — `lang="ru"`, метаданные (`title: "Минимишки — детский центр"`),
+подключение шрифтов. Импортирует `globals.css` и `Providers` из `src/_app`.
 
 ### Шаг 27. Главная страница
-`src/app/page.tsx` — заглушка, которая запрашивает `GET /api/health`
-через Server Component и выводит статус. Так сразу проверяется связка web ↔ api.
+Слайс `src/_pages/home/` — `ui/HomePage.tsx` запрашивает `GET /api/health`
+через Server Component и выводит статус, `index.ts` реэкспортирует компонент.
+
+`app/page.tsx` остаётся тонким:
+
+```tsx
+export { HomePage as default } from '@/_pages/home';
+```
+
+Так сразу проверяется и связка web ↔ api, и что слои разложены верно.
 
 ---
 

@@ -3,21 +3,29 @@
 ```
 minimishki/
 ├── apps/
-│   ├── web/                          # Next.js 16 (порт 3000)
-│   │   ├── src/
-│   │   │   ├── app/
-│   │   │   │   ├── layout.tsx        # root layout: шрифты, метаданные, Providers
-│   │   │   │   ├── page.tsx          # главная-заглушка
+│   ├── web/                          # Next.js 16 (порт 3000), архитектура — FSD
+│   │   ├── app/                      # ⚠️ роутинг Next.js — в КОРНЕ, не в src/
+│   │   │   ├── layout.tsx            # root layout: шрифты, метаданные, Providers
+│   │   │   └── page.tsx              # тонкий реэкспорт HomePage из src/_pages
+│   │   ├── src/                      # ── слои FSD ──
+│   │   │   ├── _app/                 # инициализация приложения
 │   │   │   │   ├── providers.tsx     # QueryClientProvider ('use client')
-│   │   │   │   └── globals.css       # @import "tailwindcss" + токены темы
-│   │   │   ├── components/
-│   │   │   │   └── ui/               # .gitkeep, сюда ставится shadcn/ui
-│   │   │   ├── lib/
-│   │   │   │   ├── api.ts            # типизированный fetch-клиент к NEXT_PUBLIC_API_URL
-│   │   │   │   └── utils.ts          # cn() — clsx + tailwind-merge (нужен shadcn/ui)
-│   │   │   └── types/
+│   │   │   │   └── styles/
+│   │   │   │       └── globals.css   # @import "tailwindcss" + токены темы
+│   │   │   ├── _pages/               # сборка страниц из нижних слоёв
+│   │   │   │   └── home/
+│   │   │   │       ├── ui/HomePage.tsx
+│   │   │   │       └── index.ts      # публичный API слайса
+│   │   │   ├── widgets/              # появится вместе с Header / Footer
+│   │   │   ├── features/             # по потребности
+│   │   │   ├── entities/             # по потребности
+│   │   │   └── shared/
+│   │   │       ├── api/              # типизированный fetch-клиент к NEXT_PUBLIC_API_URL
+│   │   │       ├── lib/
+│   │   │       │   └── cn.ts         # clsx + tailwind-merge (нужен shadcn/ui)
+│   │   │       └── ui/               # сюда ставится shadcn/ui
 │   │   ├── public/
-│   │   ├── components.json           # конфиг shadcn/ui
+│   │   ├── components.json           # конфиг shadcn/ui (алиасы — на src/shared)
 │   │   ├── next.config.ts
 │   │   ├── postcss.config.mjs        # @tailwindcss/postcss
 │   │   ├── eslint.config.mjs
@@ -86,8 +94,8 @@ minimishki/
 │       ├── nextjs.json
 │       ├── nestjs.json
 │       └── package.json
-├── .claude/
-│   └── .plans/                       # детальные планы (этот каталог), коммитится в git
+├── .Codex/
+│   └── plans/                        # детальные планы (этот каталог), коммитится в git
 ├── docker-compose.yml                # postgres:16-alpine + pgadmin (профиль tools)
 ├── pnpm-workspace.yaml
 ├── turbo.json                        # ключ tasks (Turborepo 2.x), не pipeline!
@@ -97,7 +105,7 @@ minimishki/
 ├── .prettierrc / .prettierignore
 ├── .editorconfig
 ├── .nvmrc                            # 22
-├── CLAUDE.md                         # краткий контекст проекта
+├── AGENTS.md                          # правила для Codex
 └── README.md
 ```
 
@@ -114,6 +122,51 @@ minimishki/
   Подключаются через протокол `workspace:*` — pnpm создаст симлинк на локальную папку
   вместо загрузки из npm-реестра.
 - **Корень** — оркестрация: скрипты `turbo run`, настройки монорепо, инфраструктура.
+
+### Почему фронтенд на FSD
+
+`apps/web` строится по **Feature-Sliced Design**. Плоская `components/` за несколько
+месяцев превращается в свалку, где непонятно, что можно переиспользовать, а что
+привязано к одной странице. FSD задаёт это структурой, а не договорённостью.
+
+**Слои — сверху вниз.** Каждый слой видит только слои **строго ниже** себя:
+
+| Слой | Что внутри | Пример из «Минимишек» |
+|---|---|---|
+| `_app` | Инициализация: провайдеры, глобальные стили | `providers.tsx`, `globals.css` |
+| `_pages` | Сборка страницы из нижних слоёв, своей логики почти нет | `home/`, `courses/`, `course-detail/` |
+| `widgets` | Самостоятельные блоки страницы | `header/`, `footer/`, `courses-preview/` |
+| `features` | Действия пользователя, меняющие состояние системы | `submit-lead/`, `change-lead-status/` |
+| `entities` | Бизнес-сущности и их представление | `course/`, `teacher/`, `lead/` |
+| `shared` | Переиспользуемое, не привязанное к домену | `ui/` (shadcn), `api/`, `lib/cn.ts` |
+
+Внутри слоя — **слайсы** (папки по домену), внутри слайса — **сегменты**
+(`ui`, `model`, `api`, `lib`, `config`). Наружу слайс отдаёт только то,
+что реэкспортировал в своём `index.ts`.
+
+**Почему `app/` вынесен из `src/`.** Next.js трактует `src/app` как App Router — положить
+туда одноимённый слой FSD нельзя, роутер сломается. Поэтому служебные папки Next
+(`app/`, при необходимости `middleware.ts`, `instrumentation.ts`) лежат в корне
+`apps/web`, а `src/` целиком отдан под архитектуру. Сами слои `app` и `pages`
+переименованы в **`_app`** и **`_pages`** — это официальная рекомендация FSD
+для проектов на Next.js.
+
+Файлы в `app/` остаются **тонкими**: маршрут импортирует готовую страницу из `_pages`
+и больше ничего не делает.
+
+```tsx
+// app/courses/page.tsx
+export { CoursesPage as default } from '@/_pages/courses';
+```
+
+**Слои заводятся по мере надобности.** Обязателен только `shared`; пустых папок
+с `.gitkeep` не создаём. На старте наполняются `_app`, `_pages`, `shared`.
+`widgets` появится вместе с Header и Footer, `entities` и `features` — когда
+у слайса возникнет второй потребитель.
+
+Правило импортов не только на словах: оно закрыто `import/no-restricted-paths`
+в `packages/eslint-config/next.js` и падает на `pnpm lint`.
+Подробности по раскладке кода — в [`07-conventions.md`](./07-conventions.md).
 
 ### Почему `auth/` и `users/` не лежат в `modules/`
 
@@ -157,8 +210,8 @@ courses/
 
 ## Что коммитится в git
 
-- ✅ `.claude/.plans/` — планы проекта, нужны в каждой сессии
-- ✅ `CLAUDE.md`, `README.md`
+- ✅ `.Codex/plans/` — планы проекта, нужны в каждой сессии
+- ✅ `AGENTS.md`, `README.md`
 - ✅ `.env.example` в обоих приложениях (разыгнорирован через `!.env.example`)
 - ✅ `pnpm-lock.yaml` — фиксирует точные версии зависимостей
 - ❌ `.env`, `.env.local` — секреты
