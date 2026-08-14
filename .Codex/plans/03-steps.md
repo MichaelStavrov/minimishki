@@ -24,7 +24,8 @@
 ### Шаг 2. Корневой `package.json`
 - `private: true`, `packageManager: "pnpm@10.x"` (**точная версия**, без `^`),
   `engines.node: ">=22"`
-- Скрипты через `turbo run`: `dev`, `build`, `lint`, `format`, `typecheck`
+- Скрипты через `turbo run`: `dev`, `build`, `lint`, `typecheck`
+  (`format` идёт мимо turbo — см. шаг 5)
 - Скрипты БД через `--filter`: `db:migrate`, `db:generate`, `db:studio`, `db:seed`
 
 Объяснить: зачем `private`, что делает `--filter`, почему БД-скрипты проксируются в `apps/api`.
@@ -49,8 +50,41 @@
 Объяснить: механика кеширования задач, что означает `^` в `dependsOn`,
 зачем `globalEnv` (изменение переменной инвалидирует кеш).
 
-### Шаг 5. Prettier
-`.prettierrc`, `.prettierignore`
+### Шаг 5. Prettier и нормализация переводов строк
+`.prettierrc`, `.prettierignore`, `.gitattributes` + правка корневого `package.json`.
+
+- **`.prettierrc`** — `printWidth: 100`, `singleQuote: true` / `jsxSingleQuote: false`,
+  `trailingComma: "all"`, `endOfLine: "lf"`, override для `*.md` с `proseWrap: "preserve"`.
+  Плагин `prettier-plugin-tailwindcss` здесь **не подключается** — см. шаг 22.
+- **`.prettierignore`** — отдельно от `.gitignore`: Prettier читает `.gitignore` только
+  с флагом `--ignore-path`. Списки расходятся намеренно: `pnpm-lock.yaml`
+  и `prisma/migrations/` коммитятся, но не форматируются. Также исключены `.Codex/`
+  и `AGENTS.md` — Prettier выравнивал бы Markdown-таблицы пробелами и давал дифф
+  на сотни строк в документации при каждом `pnpm format`.
+- **Корневой `package.json`** — `"format": "prettier --write ."`,
+  `"format:check": "prettier --check ."`, `prettier` в `devDependencies`.
+
+> ⚠️ Форматирование **не** заводится как turbo-задача. У него нет графа зависимостей
+> и нечего кешировать, а turbo-вариант потребовал бы дублировать `prettier`
+> и скрипт `format` в каждом пакете. `turbo.json` на этом шаге не меняется.
+
+- **`.gitattributes`** — `* text=auto eol=lf`, исключение `eol=crlf`
+  для `*.bat` / `*.cmd` / `*.ps1`, пометки `binary` для изображений и шрифтов,
+  `pnpm-lock.yaml -diff linguist-generated=true`.
+
+> ⚠️ Без `.gitattributes` глобальный `core.autocrlf=true` (дефолт Git for Windows)
+> подменяет LF на CRLF при checkout, и `pnpm format:check` с `endOfLine: "lf"` падает
+> **всегда** — при зелёном CI на Linux.
+
+**После вставки:**
+
+```bash
+git add --renormalize .
+git check-attr text eol -- package.json   # ожидаем text: auto, eol: lf
+```
+
+**Проверить полностью** — на КТ-1: `pnpm format` → `pnpm format:check` проходит
+без замечаний, `pnpm-lock.yaml` в выводе не появляется.
 
 ---
 
@@ -303,6 +337,18 @@ pnpm install
 Tailwind v4 настраивается **через CSS**, без `tailwind.config.ts`:
 `@import "tailwindcss"` + блок `@theme` с палитрой детского центра
 (тёплые, яркие цвета) и радиусами.
+
+**Здесь же подключается `prettier-plugin-tailwindcss`** (отложен с шага 5 —
+до появления `globals.css` плагин падал бы на каждом запуске). В корневой
+`package.json` добавляется `prettier-plugin-tailwindcss@^0.8.1`, в `.prettierrc`:
+
+```json
+"plugins": ["prettier-plugin-tailwindcss"],
+"tailwindStylesheet": "./apps/web/src/_app/styles/globals.css"
+```
+
+Опция `tailwindStylesheet` обязательна для v4: конфига `tailwind.config.ts` больше нет,
+и порядок классов плагин выясняет из самого CSS-файла с директивой `@theme`.
 
 ### Шаг 23. shadcn/ui
 `components.json` (стиль `new-york`) + `src/shared/lib/cn.ts` (`cn()` — clsx + tailwind-merge).

@@ -1,0 +1,27 @@
+# Всё текстовое хранится в git с LF и выкладывается в рабочую директорию тоже с LF.
+# Перекрывает локальный core.autocrlf у каждого разработчика.
+* text=auto eol=lf
+
+# Windows-скрипты — cmd.exe разбирает файл построчно и на LF ведёт себя
+# непредсказуемо (особенно с метками и goto)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Изображения и шрифты — бинарные, автоопределению их не доверяем
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.avif binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.pdf   binary
+
+# Lock-файл генерируется pnpm — не показываем его в диффах
+# и не учитываем в статистике языков на GitHub
+pnpm-lock.yaml -diff linguist-generated=true

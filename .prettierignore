@@ -1,0 +1,37 @@
+# Зависимости
+node_modules/
+.pnpm-store/
+
+# Сборки
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Кеши инструментов
+.turbo/
+.cache/
+.eslintcache
+
+# Lock-файл — генерируется pnpm, форматировать нельзя
+pnpm-lock.yaml
+
+# Prisma — SQL-миграции и сгенерированный клиент
+apps/api/prisma/migrations/
+apps/api/generated/
+node_modules/.prisma/
+
+# Переменные окружения
+.env
+.env.*
+
+# Логи
+*.log
+logs/
+
+# Документация проекта — ведётся вручную.
+# Prettier выравнивает Markdown-таблицы пробелами: получился бы дифф
+# на сотни строк в файлах, не относящихся к текущей задаче
+.Codex/
+AGENTS.md

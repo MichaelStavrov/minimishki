@@ -4,12 +4,12 @@
 
 ## ▶️ Текущее состояние
 
-**Следующий шаг: № 5 — `.prettierrc`, `.prettierignore`** (этап A).
+**Следующий шаг: № 6 — `packages/tsconfig`** (этап B).
 
 При старте новой сессии:
 1. Прочитать [`00-process.md`](./00-process.md) — требования к процессу работы.
-2. Выдать код шага 5: `.prettierrc` и `.prettierignore`.
-
+2. Выдать код шага 6: `packages/tsconfig` — `base.json`, `nextjs.json`, `nestjs.json`
+   и `package.json` пакета.
 3. Перед написанием версий пакетов проверять актуальные через `pnpm view <пакет> version`.
 
 ### Что уже есть в `D:\programming\minimishki`
@@ -18,10 +18,16 @@
 .git/                    # репозиторий инициализирован
 .Codex/                  # контекст и планы проекта
 .editorconfig
+.gitattributes
 .gitignore
 .npmrc
 .nvmrc
+.prettierignore
+.prettierrc
 AGENTS.md
+package.json
+pnpm-workspace.yaml
+turbo.json
 ```
 
 ### Состояние окружения
@@ -37,15 +43,16 @@ AGENTS.md
 
 Нумерация синхронизирована с [`03-steps.md`](./03-steps.md).
 
-### Этап A — каркас монорепозитория ← **в работе**
+### Этап A — каркас монорепозитория ✅
 
 - [x] Шаг 1 — `.gitignore`, `.editorconfig`, `.nvmrc`, `.npmrc` *(09.08.2026)*
 - [x] Шаг 2 — корневой `package.json` *(10.08.2026)*
 - [x] Шаг 3 — `pnpm-workspace.yaml` *(10.08.2026)*
 - [x] Шаг 4 — `turbo.json` (ключ `tasks`, не `pipeline`!) *(10.08.2026)*
-- [ ] Шаг 5 — `.prettierrc`, `.prettierignore`
+- [x] Шаг 5 — `.prettierrc`, `.prettierignore`, `.gitattributes` + правка корневого
+  `package.json` *(14.08.2026)*
 
-### Этап B — общие пакеты
+### Этап B — общие пакеты ← **в работе**
 
 - [ ] Шаг 6 — `packages/tsconfig`
 - [ ] Шаг 7 — `packages/eslint-config`
@@ -120,6 +127,10 @@ AGENTS.md
 | **`onDelete: SetNull` для `Lead.course`** | Заявка — история обращений, она должна пережить удаление направления |
 | **`onDelete: Cascade` для `GalleryItem.post`** | Удалили новость — её фотографии не нужны |
 | Версии пакетов «шапкой» (`^`), проверяются перед написанием | Точные версии фиксирует `pnpm-lock.yaml`; брать версии по памяти нельзя |
+| **Prettier запускается из корня, без turbo** | Форматирование общерепозиторное: графа зависимостей нет, кешировать нечего, а выигрыш turbo не покрыл бы его же накладные расходы. Turbo-вариант потребовал бы дублировать `prettier` и скрипт `format` в каждом пакете. Скрипты: `format` → `prettier --write .`, `format:check` → `prettier --check .` (для CI, ненулевой код возврата). Задачи `format` в `turbo.json` **нет** |
+| `printWidth: 100` в `.prettierrc` | Компромисс: сигнатура сервиса Nest и типовая строка JSX помещаются в строку, при этом два файла рядом читаются на 24" мониторе |
+| **`prettier-plugin-tailwindcss` отложен до шага 22** | Плагину для Tailwind v4 нужна опция `tailwindStylesheet` с путём к `globals.css`. Файла пока нет — Prettier падал бы на каждом запуске |
+| **`.gitattributes` с `* text=auto eol=lf`** | У пользователя глобально `core.autocrlf=true`: git подменял бы LF на CRLF при checkout, и `pnpm format:check` с `endOfLine: "lf"` падал бы **всегда**, даже сразу после `pnpm format`. Настройка уровня репозитория надёжнее настройки машины — приезжает вместе с `git clone` и перекрывает `core.autocrlf` |
 | В `.npmrc` **не** включён `shamefully-hoist` | Сохраняем строгую изоляцию зависимостей pnpm, чтобы ловить неявные импорты |
 | `strict-peer-dependencies=false` в `.npmrc` | Иначе `pnpm install` падает на конфликтах peer-зависимостей React 19 / Nest 11 |
 | `end_of_line = lf` в `.editorconfig` | Windows по умолчанию CRLF, но Docker-контейнеры и Linux ожидают LF |
@@ -171,3 +182,32 @@ AGENTS.md
 - Выполнен шаг 4: создан `turbo.json` с ключом `tasks`, настройками кеша и `globalEnv`.
 - Документация перенесена в `.Codex/`; проектный обзор находится в `.Codex/README.md`.
   Исходные папка планов и устаревший проектный обзор удалены.
+
+### Сессия 3 — 14.08.2026
+
+- Выполнен шаг 5 — этап A закрыт.
+- Созданы `.prettierrc` (`printWidth: 100`, одинарные кавычки, `endOfLine: "lf"`,
+  `proseWrap: "preserve"` для Markdown) и `.prettierignore`.
+- **Найдена нестыковка в шаге 2.** Корневой `package.json` содержал
+  `"format": "turbo run format"`, но задачи `format` в `turbo.json` не было и `prettier`
+  нигде не был объявлен — `pnpm format` завершался бы ошибкой
+  `Could not find task "format"`. Исправлено: Prettier запускается из корня напрямую,
+  turbo.json не трогали.
+- **Найдена вторая проблема — CRLF.** `git diff` предупреждал
+  `LF will be replaced by CRLF`: глобальный `core.autocrlf=true` при отсутствующем
+  `.gitattributes`. В связке с `endOfLine: "lf"` это давало бы вечно красный
+  `pnpm format:check` на Windows при зелёном CI на Linux. Добавлен `.gitattributes`
+  (`* text=auto eol=lf`, пометки `binary` для изображений и шрифтов,
+  `pnpm-lock.yaml -diff linguist-generated=true`), выполнен `git add --renormalize .`.
+  Проверено: `git check-attr text eol -- package.json` → `text: auto`, `eol: lf`,
+  предупреждение исчезло.
+- **Код-ревью шага.** Блокирующих замечаний нет. Закрыты два: `.Codex/` и `AGENTS.md`
+  исключены из форматирования (Prettier выравнивал бы Markdown-таблицы и давал дифф
+  на сотни строк в документации при каждом `pnpm format`); в `.gitattributes` добавлено
+  исключение `eol=crlf` для `*.bat` / `*.cmd` / `*.ps1`. Осознанно оставлены как есть:
+  дублирование `node_modules/*` в `.prettierignore` и явно прописанные опции
+  `.prettierrc`, совпадающие с дефолтами Prettier 3 — страховка на случай мажорного
+  обновления форматтера.
+- Версия проверена командой: `prettier@3.9.6`.
+- Полная проверка форматирования отложена до **КТ-1** — бинарника `prettier`
+  в `node_modules` пока нет.
