@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@minimishki/tsconfig/base.json",
+  "compilerOptions": {
+    // Пакет уезжает в браузерный бандл — типы Node здесь не нужны и вредны.
+    // В base.json стоит types: ["node"], без перекрытия tsc упал бы на TS2688:
+    // @types/node не объявлен в зависимостях, а pnpm чужие пакеты не показывает.
+    "types": [],
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
