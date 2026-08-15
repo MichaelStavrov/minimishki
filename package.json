@@ -21,6 +21,12 @@
     "turbo": "^2.10.9"
   },
   "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "argon2",
+      "prisma"
+    ],
     "ignoredBuiltDependencies": [
       "unrs-resolver"
     ]
