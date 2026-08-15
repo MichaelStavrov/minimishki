@@ -4,15 +4,15 @@
 
 ## ▶️ Текущее состояние
 
-**Следующий шаг: № 7 — `packages/eslint-config`** (этап B).
+**Следующий шаг: № 8 — `packages/shared`** (этап B, последний шаг перед КТ-1).
 
 При старте новой сессии:
 1. Прочитать [`00-process.md`](./00-process.md) — требования к процессу работы.
-2. Выдать код шага 7: `packages/eslint-config` — `base.js`, `next.js`, `nest.js`
-   и `package.json` пакета (flat config). В `next.js` — `import/no-restricted-paths`
-   с зонами по слоям FSD.
+2. Выдать код шага 8: `packages/shared` — `package.json`, `tsconfig.json`,
+   `src/index.ts`, `src/enums.ts`, `src/dto/`. **Без зависимости от `@prisma/client`**.
 3. Перед написанием версий пакетов проверять актуальные через `pnpm view <пакет> version`.
-   ⚠️ Для `typescript` брать ветку **6.x** (`^6.0.3`), а не `latest` — см. решение в таблице ниже.
+   ⚠️ Два пакета, где `latest` брать **нельзя**: `typescript` (нужна ветка **6.x**)
+   и `eslint` (нужна ветка **9.x**) — см. решения в таблице ниже.
 
 ### Что уже есть в `D:\programming\minimishki`
 
@@ -20,10 +20,15 @@
 .git/                    # репозиторий инициализирован
 .Codex/                  # контекст и планы проекта
 packages/
-└── tsconfig/            # @minimishki/tsconfig
-    ├── base.json
-    ├── nextjs.json
-    ├── nestjs.json
+├── tsconfig/            # @minimishki/tsconfig
+│   ├── base.json
+│   ├── nextjs.json
+│   ├── nestjs.json
+│   └── package.json
+└── eslint-config/       # @minimishki/eslint-config
+    ├── base.js
+    ├── next.js
+    ├── nest.js
     └── package.json
 .editorconfig
 .gitattributes
@@ -63,7 +68,7 @@ turbo.json
 ### Этап B — общие пакеты ← **в работе**
 
 - [x] Шаг 6 — `packages/tsconfig` *(15.08.2026)*
-- [ ] Шаг 7 — `packages/eslint-config`
+- [x] Шаг 7 — `packages/eslint-config` *(15.08.2026)*
 - [ ] Шаг 8 — `packages/shared` (без зависимости от Prisma)
 - [ ] 🔧 **КТ-1** — `pnpm install`
 
@@ -121,6 +126,13 @@ turbo.json
 |---|---|
 | **Терминал — git bash**, не PowerShell | Решение пользователя. Все команды в планах — в bash-синтаксисе. Пути: в заголовках шагов Windows-стиль (`D:\...`), внутри команд bash-стиль (`/d/...`) |
 | **Общие правила — в глобальном `AGENTS.md`** | `C:\Users\mihal\.Codex\AGENTS.md` действует во всех проектах. Проектные файлы содержат только специфику «Минимишек», без дублирования |
+| **ESLint 9.x** (`^9.39.5`), а не 10.x | Проверено запуском: `eslint-config-next@16.3.1` на ESLint 10.8.1 падает — `TypeError: contextOrFilename.getFilename is not a function` в `eslint-plugin-react@7.37.5`. ESLint 10 убрал legacy-API правил, а Next тянет `eslint-plugin-react`, `eslint-plugin-import` и `eslint-plugin-jsx-a11y` с peer до `^9`. Установка проходит (у нас `strict-peer-dependencies=false`), ошибка вылезает только на запуске. На 9.39.5 та же связка отрабатывает штатно |
+| **`types: ["node"]` обязателен в `base.json`** | **TypeScript 6 больше не подключает `@types/*` автоматически.** Проверено на одном и том же конфиге и `node_modules`: TS 5.9.3 → `exit 0`, TS 6.0.3 → `TS2584: Cannot find name 'console'`. Ни родительский `node_modules`, ни `typeRoots` не помогают — только явное перечисление. Без этого бэкенд не компилируется вовсе (`process`, `console`, `Buffer`) |
+| **`eslint-import-resolver-typescript` обязателен** | Без него `import/no-restricted-paths` **молча не работает**: правило пропускает импорты, которые не смогло разрешить, а стандартный резолвер не находит `.ts` без расширения. Проверено — на заведомом нарушении FSD линтер отчитывался «0 проблем». С резолвером ловится и относительный путь, и алиас `@/_pages/home` |
+| **`eslint-plugin-import`, а не форк `import-x`** | Форк активнее поддерживается и знает про ESLint 10, но требует префикса `import-x/`, расходясь с записанным в планах `import/`. К тому же оригинал всё равно приходит транзитивно через `eslint-config-next` — были бы оба в дереве |
+| **`eslint-config-next/core-web-vitals`**, а не базовый вход | Витринный сайт находят через поиск, Core Web Vitals влияют на ранжирование. Правила ловят `<img>` вместо `next/image` и `<a>` вместо `next/link`. Откат — правка одной строки импорта |
+| **Type-aware правила включены везде** | `recommendedTypeChecked` через `projectService: true`. Ради `no-floating-promises`: забытый `await` в сервисе Nest молча теряет запись в БД, контроллер при этом отдаёт `201`. Цена — `pnpm lint` строит полную программу TS и заметно медленнее |
+| **`tsconfigRootDir: process.cwd()`** в общем ESLint-конфиге | `import.meta.dirname` указывал бы на `packages/eslint-config/`, а нужна папка проверяемого приложения. Следствие: `eslint` запускается **из папки приложения** — так и делает `turbo run lint` |
 | **TypeScript 6.x** (`^6.0.3`), а не 7.x | В npm `latest` — TS 7.0.2, нативный компилятор на Go (GA 08.07.2026). У него **нет программного API компилятора**, а на нём держатся `nest build`, `ts-node` (нужен для `prisma/seed.ts`), `ts-jest` и type-aware правила `typescript-eslint`. Проверено: `typescript-eslint@8.67.0` объявляет peer `typescript >=4.8.4 <6.1.0`. Возврат к 7.x — в [`08-backlog.md`](./08-backlog.md), после выхода 7.1 с программным API |
 | **В конфигах TS нет `baseUrl`, `moduleResolution: "node"`, `target: "es5"`** | Все три объявлены устаревшими в TS 6 и будут удалены в 7. Замена: `paths` без `baseUrl`, разрешение модулей — `NodeNext` (бэкенд) и `Bundler` (фронтенд) |
 | **В общем пакете `tsconfig` — только флаги, без путей** | Относительные пути (`outDir`, `rootDir`, `paths`, `include`, `exclude`) TypeScript резолвит относительно файла, где они **объявлены**, а не наследующего. `"outDir": "./dist"` в `packages/tsconfig/nestjs.json` собирал бы бэкенд внутрь пакета конфигов. Пути живут в `apps/*/tsconfig.json` |
@@ -249,3 +261,26 @@ turbo.json
 - Код-ревью шага пользователь не запрашивал.
 - Проверено: все четыре файла парсятся как JSON, `git status` видит `packages/`.
   Симлинк `node_modules/@minimishki/tsconfig` и `pnpm format:check` — на **КТ-1**.
+- Выполнен шаг 7: создан пакет `packages/eslint-config` — `package.json`, `base.js`,
+  `next.js`, `nest.js` (flat config, ESM).
+- **Конфиги проверены вживую**, а не только написаны. В песочнице собран стенд
+  на тех же версиях пакетов (`eslint@9.39.5`, `typescript@6.0.3`,
+  `eslint-config-next@16.3.1`, `typescript-eslint@8.67.0`) с раскладкой FSD и
+  типовыми формами кода Nest. Результаты — четыре находки, все занесены в решения:
+  1. **ESLint 10 не работает** с `eslint-config-next` — падает на `eslint-plugin-react`.
+     Перешли на ветку 9.x.
+  2. **`import/no-restricted-paths` без TS-резолвера молча бездействует** —
+     на заведомом нарушении слоёв выдавал «0 проблем».
+  3. **TypeScript 6 не подключает `@types/*` автоматически** — понадобилась правка
+     `base.json` из шага 6 (добавлен `types: ["node"]`).
+  4. Конфликта плагинов между нашим конфигом и `eslint-config-next` **нет** —
+     опасение про «Cannot redefine plugin» не подтвердилось.
+- Проверено, что срабатывают: зоны FSD (в том числе через алиас `@/`),
+  `no-floating-promises` на TypeScript 6, исключение `no-console` для `prisma/seed.ts`.
+  Типовой код Nest (пустой класс модуля, конструктор с параметрами-свойствами,
+  DTO без инициализатора) проходит `recommendedTypeChecked` без замечаний —
+  отключать `no-extraneous-class` и `no-empty-function` не понадобилось.
+- **Находка для шага 11:** `rootDir: "./src"` в `apps/api/tsconfig.json` несовместим
+  с включением `prisma/seed.ts` — `TS6059: File is not under rootDir`. Решать
+  отсутствием `rootDir` либо отдельным `tsconfig` для сида.
+- Код-ревью шага пользователь не запрашивал.
