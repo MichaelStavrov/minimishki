@@ -4,13 +4,15 @@
 
 ## ▶️ Текущее состояние
 
-**Следующий шаг: № 9 — `docker-compose.yml`** (этап C, инфраструктура).
-Этап B закрыт, КТ-1 пройдена.
+**Следующий шаг: № 10 — `.env.example`** (этап C, инфраструктура).
+Этап B закрыт, КТ-1 пройдена, шаг 9 закрыт и проверен вживую.
 
 При старте новой сессии:
 1. Прочитать [`00-process.md`](./00-process.md) — требования к процессу работы.
-2. Выдать код шага 9 — описание в [`03-steps.md`](./03-steps.md). DevOps пользователь
-   не знает: пояснения развёрнутые, с разбором сервисов, volume, healthcheck и профилей.
+2. Выдать код шага 10 — описание в [`03-steps.md`](./03-steps.md). DevOps пользователь
+   не знает: пояснения развёрнутые. Файлов два — `apps/api/.env.example`
+   и `apps/web/.env.example`; после вставки создаются реальные `.env` и `.env.local`.
+   ⚠️ Папок `apps/api` и `apps/web` ещё нет — их нужно создать.
 3. Перед написанием версий пакетов проверять актуальные через `pnpm view <пакет> version`.
    ⚠️ Два пакета, где `latest` брать **нельзя**: `typescript` (нужна ветка **6.x**)
    и `eslint` (нужна ветка **9.x**) — см. решения в таблице ниже.
@@ -53,6 +55,7 @@ packages/
 .prettierignore
 .prettierrc
 AGENTS.md
+docker-compose.yml
 package.json
 pnpm-workspace.yaml
 turbo.json
@@ -66,6 +69,12 @@ turbo.json
   три локальных пакета подключены симлинками
 - ✅ `pnpm --filter @minimishki/shared build` — `dist/` собирается
 - ✅ `pnpm format:check` — `All matched files use Prettier code style`
+- ✅ Docker Desktop работает через WSL 2 *(15.08.2026)* — движок 29.7.2,
+  Compose v5.3.1. Понадобилась установка WSL 2 (`wsl --install --no-distribution`)
+  и перезагрузка: Windows 11 Домашняя не даёт Docker бэкенд Hyper-V
+- ✅ `docker compose up -d postgres` — контейнер `minimishki-postgres` в состоянии
+  `healthy`, volume `minimishki_pgdata` создан, `psql` отвечает: PostgreSQL 16.15,
+  база `minimishki`, пользователь `postgres`
 
 ---
 
@@ -89,9 +98,9 @@ turbo.json
 - [x] Шаг 8 — `packages/shared` (без зависимости от Prisma) *(15.08.2026)*
 - [x] 🔧 **КТ-1** — `pnpm install` *(15.08.2026)*
 
-### Этап C — инфраструктура ← **следующий**
+### Этап C — инфраструктура ← **текущий**
 
-- [ ] Шаг 9 — `docker-compose.yml`
+- [x] Шаг 9 — `docker-compose.yml` *(15.08.2026)*
 - [ ] Шаг 10 — `.env.example` + создание `.env` / `.env.local`
 
 ### Этап D — backend, база
@@ -367,3 +376,48 @@ turbo.json
 - **Вывод на будущее:** после каждого шага сверять `git status` со списком выданных
   файлов **до** коммита. Обе ошибки — пропущенная вставка, и обе прошли бы дальше,
   если бы не проверки контрольной точки.
+
+### Сессия 6 — 15.08.2026
+
+- Выдан код шага 9 — `docker-compose.yml`: `postgres:16-alpine` (порт 5432, база
+  `minimishki`, именованный volume `pgdata`, healthcheck через `pg_isready`) и
+  `dpage/pgadmin4:9` (порт 5050→80, профиль `tools`, `depends_on` с условием
+  `service_healthy`). Задано имя проекта Compose `name: minimishki`, чтобы volume
+  назывался предсказуемо и не терялся при переименовании каталога.
+- **Предположения, озвученные явно** (в планах их не было): логин/пароль Postgres —
+  `postgres` / `postgres` (взято из `DATABASE_URL` в `01-stack.md`); вход в pgAdmin —
+  `admin@minimishki.local` / `admin`; тег pgAdmin пинуется по мажору (`:9`, актуальный
+  релиз на дату — 9.17), по аналогии с `postgres:16-alpine`.
+- Именованный volume вместо bind-mount — принципиально для Windows: bind-mount идёт
+  через прослойку между Windows и Linux-VM, которая не даёт Postgres нужных POSIX-прав
+  и семантики `fsync`.
+- 🚧 **Проверка шага сорвалась: Docker Desktop не запустился** — «Virtualization
+  support not detected». Диагностика показала, что дело **не** в UEFI:
+  `HypervisorPresent: True`, VBS (Device Guard) в состоянии `2` — running, то есть
+  VT-x включён. Причина другая — `wsl --status` отвечал «Подсистема Windows для Linux
+  не установлена». Windows 11 **Домашняя** (build 26200): Hyper-V как бэкенд там
+  недоступен, Docker Desktop умеет работать только через WSL 2.
+  Выдана команда `wsl --install --no-distribution` (из PowerShell с правами
+  администратора) + перезагрузка. Флаг `--no-distribution` — потому что Docker Desktop
+  разворачивает собственные дистрибутивы `docker-desktop` / `docker-desktop-data`,
+  Ubuntu ему не нужна.
+  ⚠️ Значение `VirtualizationFirmwareEnabled: False` в `Win32_Processor` — **ложный
+  сигнал**: когда система сама работает под гипервизором, WMI не может опросить
+  firmware. Смотреть надо на `HypervisorPresent`.
+- Сессия прервана перезагрузкой. Коммит не предлагался, код-ревью не запрашивалось.
+
+### Сессия 7 — 15.08.2026
+
+- **Шаг 9 закрыт.** После установки WSL 2 и перезагрузки Docker Desktop поднялся:
+  движок `29.7.2`, Compose `v5.3.1`. Файл `docker-compose.yml` из сессии 6 вставлен
+  пользователем без изменений.
+- Проверка по плану пройдена: `docker compose ps` показывает `minimishki-postgres`
+  в состоянии `Up (healthy)` с пробросом `0.0.0.0:5432->5432/tcp`, то есть healthcheck
+  `pg_isready` отработал. Создан volume `minimishki_pgdata` — префикс `minimishki_`
+  подтверждает, что ключ `name:` в compose-файле действует.
+- Дополнительно проверено соединение с базой изнутри контейнера:
+  `psql -U postgres -d minimishki` отдаёт `minimishki | postgres | 16.15`.
+  То есть переменные `POSTGRES_DB` / `POSTGRES_USER` применились при инициализации
+  кластера, а не остались декларацией.
+- pgAdmin **не проверялся**: сервис под профилем `tools` и по умолчанию не поднимается.
+  Отдельная проверка — при первой реальной надобности заглянуть в базу.
