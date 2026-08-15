@@ -1,0 +1,140 @@
+// Клиент Prisma — генерируется в node_modules/@prisma/client
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// Перечисления
+// ============================================================
+
+enum Role {
+  ADMIN   // полный доступ
+  MANAGER // работа с заявками и контентом
+  USER    // обычный пользователь
+}
+
+enum LeadStatus {
+  NEW         // новая заявка
+  IN_PROGRESS // менеджер связался
+  CONFIRMED   // записан на занятие
+  REJECTED    // отказ
+}
+
+// ============================================================
+// Пользователи
+// ============================================================
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String // хеш argon2, никогда не отдаётся клиенту
+  name         String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([role])
+}
+
+// ============================================================
+// Контент сайта
+// ============================================================
+
+/// Направление / программа детского центра
+model Course {
+  id          String   @id @default(cuid())
+  slug        String   @unique // ЧПУ: /courses/razvivayushchie-zanyatiya
+  title       String
+  description String
+  ageFrom     Int // возраст от, лет
+  ageTo       Int // возраст до, лет
+  price       Int // рубли, целое число
+  imageUrl    String?
+  isPublished Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teachers Teacher[] // неявная many-to-many
+  leads    Lead[] // обратная сторона Lead.course
+
+  @@index([isPublished, sortOrder])
+}
+
+/// Педагог центра
+model Teacher {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  fullName    String
+  position    String // «педагог-психолог»
+  bio         String?
+  photoUrl    String?
+  isPublished Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses Course[] // обратная сторона Course.teachers
+
+  @@index([isPublished, sortOrder])
+}
+
+/// Новость центра
+model Post {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String? // краткий анонс для карточки в списке
+  content     String
+  coverUrl    String?
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  gallery GalleryItem[] // фото к новости
+
+  @@index([isPublished, publishedAt])
+}
+
+/// Фотография: либо привязана к новости, либо лежит в общей галерее
+model GalleryItem {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String? // alt-текст: SEO и доступность
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  postId String?
+  post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, sortOrder])
+}
+
+// ============================================================
+// Заявки
+// ============================================================
+
+/// Заявка на пробное занятие с формы на сайте
+model Lead {
+  id        String     @id @default(cuid())
+  name      String // имя родителя
+  phone     String
+  childName String?
+  childAge  Int?
+  comment   String?
+  status    LeadStatus @default(NEW)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([courseId])
+}

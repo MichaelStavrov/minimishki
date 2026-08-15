@@ -4,17 +4,17 @@
 
 ## ▶️ Текущее состояние
 
-**Следующий шаг: № 12 — `prisma/schema.prisma`** (этап D, backend и база).
-Шаг 11 закрыт: конфиги `apps/api` на месте, зависимости установлены и проверены.
+**Следующий шаг: № 13 — валидация окружения** (этап D, backend и база).
+Шаг 12 закрыт, 🔧 **КТ-2 пройдена**: база развёрнута, клиент Prisma сгенерирован.
 
 При старте новой сессии:
 1. Прочитать [`00-process.md`](./00-process.md) — требования к процессу работы.
-2. Выдать код шага 12 — готовый текст схемы в [`04-domain-model.md`](./04-domain-model.md).
-   Схема написана под **Prisma 6** (`generator client { provider = "prisma-client-js" }`,
-   `url = env("DATABASE_URL")` прямо в `datasource`) — это и стоит в проекте,
-   правки под 7-ю ветку **не нужны**.
-   Сразу после схемы — 🔧 **КТ-2**: `pnpm db:generate` и `pnpm db:migrate`.
-   Контейнер Postgres для этого должен быть поднят.
+2. Выдать код шага 13 — описание в [`03-steps.md`](./03-steps.md):
+   `src/config/env.validation.ts` + `src/config/configuration.ts`,
+   `ConfigModule.forRoot({ isGlobal: true, validate })`.
+   ⚠️ В проекте стоит **zod 4** (`^4.4.3`), а не 3.x: у неё другой API верхнеуровневых
+   валидаторов (`z.email()` вместо `z.string().email()` и т.п.). Примеры из статей
+   про zod 3 копировать нельзя — сверяться с установленной версией.
 3. Перед написанием версий пакетов проверять актуальные через `pnpm view <пакет> version`.
    ⚠️ Два пакета, где `latest` брать **нельзя**: `typescript` (нужна ветка **6.x**)
    и `eslint` (нужна ветка **9.x**) — см. решения в таблице ниже.
@@ -26,6 +26,11 @@
 .Codex/                  # контекст и планы проекта
 apps/
 ├── api/
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   └── migrations/
+│   │       ├── 20260815191636_init/migration.sql
+│   │       └── migration_lock.toml
 │   ├── package.json     # имя пакета — api (под pnpm --filter api)
 │   ├── tsconfig.json    # rootDir ./src, outDir ./dist, prisma/ исключён
 │   ├── nest-cli.json
@@ -82,6 +87,10 @@ turbo.json
   три локальных пакета подключены симлинками
 - ✅ `pnpm --filter @minimishki/shared build` — `dist/` собирается
 - ✅ `pnpm format:check` — `All matched files use Prettier code style`
+- ✅ **Расширение Prisma для VS Code откачено до `6.19.0`** *(15.08.2026)*, автообновление
+  ему отключено. Версии расширения совпадали с версиями Prisma до 7.0.0 (19.11.2025),
+  дальше пошла собственная нумерация 31.x — она несёт языковой сервер 7-й ветки
+  и подчёркивает `url` в `datasource` как ошибку, хотя для Prisma 6 это норма
 - ✅ Docker Desktop работает через WSL 2 *(15.08.2026)* — движок 29.7.2,
   Compose v5.3.1. Понадобилась установка WSL 2 (`wsl --install --no-distribution`)
   и перезагрузка: Windows 11 Домашняя не даёт Docker бэкенд Hyper-V
@@ -119,8 +128,8 @@ turbo.json
 ### Этап D — backend, база ← **текущий**
 
 - [x] Шаг 11 — конфиги `apps/api` + правка `turbo.json` *(15.08.2026)*
-- [ ] Шаг 12 — `prisma/schema.prisma`
-- [ ] 🔧 **КТ-2** — `pnpm db:generate` + `pnpm db:migrate`
+- [x] Шаг 12 — `prisma/schema.prisma` *(15.08.2026)*
+- [x] 🔧 **КТ-2** — миграция `20260815191636_init`, клиент сгенерирован *(15.08.2026)*
 - [ ] Шаг 13 — валидация env (zod)
 - [ ] Шаг 14 — `PrismaModule` / `PrismaService`
 - [ ] Шаг 15 — `main.ts` + `app.module.ts` + `src/health/`
@@ -481,6 +490,26 @@ turbo.json
   `query_engine-windows.dll.node`, `schema-engine-windows.exe`.
   `pnpm build` / `lint` / `typecheck` не запускались осознанно —
   в `apps/api/src/` ещё нет ни одного файла, `tsc` упал бы на `TS18003`.
+- Выполнен шаг 12: `apps/api/prisma/schema.prisma` вставлен без правок — текст
+  из [`04-domain-model.md`](./04-domain-model.md) валиден для Prisma 6 как есть.
+- 🐞 **Ложная ошибка от редактора.** VS Code подчёркивал `url` в `datasource`:
+  «The datasource property `url` is no longer supported in schema files».
+  Это правило **Prisma 7**, а у нас 6.19.3 — локальный CLI на той же схеме отвечал
+  `The schema at prisma\schema.prisma is valid 🚀`. Источник нашёлся по составу
+  расширения: `prisma.prisma-31.11.0` тянет внутри пакеты 7.x. Лечение — откат
+  расширения до 6.19.0 (см. «Состояние окружения»). Вывод: при расхождении верить
+  CLI из `node_modules`, а не языковому серверу редактора — они версионируются
+  независимо.
+- 🔧 **КТ-2 пройдена.** `prisma migrate dev --name init` создала миграцию
+  `20260815191636_init` и накатила её на базу в контейнере. Проверено:
+  `migrate status` → `Database schema is up to date!`; в базе восемь таблиц
+  (шесть моделей + служебные `_CourseToTeacher` и `_prisma_migrations`);
+  enum-типы `Role` и `LeadStatus` созданы; сгенерированный клиент знает
+  ровно шесть моделей — `User, Course, Teacher, Post, GalleryItem, Lead`.
+- Команда запускалась в форме `pnpm --filter api exec prisma migrate dev --name init`,
+  а не корневым `pnpm db:migrate`: без `--name` команда интерактивна (спрашивает имя
+  миграции), а интерактивные программы в git bash без `winpty` виснут. Прокидывать
+  флаг через два слоя скриптов — лишний риск.
 - ⚠️ **Хвост на шаг 19.** Prisma предупреждает: `package.json#prisma` (там лежит
   команда сида) объявлено устаревшим и в Prisma 7 будет удалено, замена —
   `prisma.config.ts`. В 6-й ветке поле работает, предупреждение косметическое,
