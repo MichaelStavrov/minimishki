@@ -99,6 +99,10 @@ git check-attr text eol -- package.json   # ожидаем text: auto, eol: lf
 ### Шаг 7. `packages/eslint-config`
 `base.js`, `next.js`, `nest.js` + `package.json` (flat config).
 
+> ⚠️ Правило `import/no-restricted-paths` **не работает без `eslint-import-resolver-typescript`**
+> и настройки `settings['import/resolver'].typescript`: неразрешённые импорты оно молча
+> пропускает, а стандартный резолвер не находит `.ts` без расширения.
+>
 > В `next.js` — правило **`import/no-restricted-paths`** с зонами по слоям FSD:
 > слой может импортировать только слои строго ниже себя
 > (`_app` → `_pages` → `widgets` → `features` → `entities` → `shared`).
@@ -165,6 +169,13 @@ cp apps/web/.env.example apps/web/.env.local
 
 ### Шаг 11. Конфиги `apps/api`
 `package.json` + `tsconfig.json` + `nest-cli.json` + `eslint.config.mjs`.
+
+> ⚠️ **`rootDir: "./src"` задавать нельзя**, если `prisma/seed.ts` входит в тот же проект:
+> компилятор выдаёт `TS6059: File ... is not under rootDir`. Проверено на шаге 7.
+> Варианты: не указывать `rootDir` вовсе (TypeScript выведет его сам) либо завести
+> для сида отдельный `tsconfig`. Здесь же задаётся `outDir: "./dist"` — в общем пакете
+> `@minimishki/tsconfig` его нет, потому что относительные пути резолвятся
+> относительно объявляющего файла.
 
 Объяснить: структуру Nest-приложения, роль каждого конфига, что делает `nest-cli.json`,
 зачем Nest нужны `emitDecoratorMetadata` и `experimentalDecorators`.
