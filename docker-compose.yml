@@ -1,0 +1,55 @@
+name: minimishki
+
+services:
+  # PostgreSQL — основная база проекта.
+  postgres:
+    image: postgres:16-alpine
+    container_name: minimishki-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: minimishki
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      # Локаль и кодировка для инициализации кластера (учитывается только
+      # при первом создании, когда volume ещё пустой).
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C'
+    ports:
+      # <порт на хосте>:<порт в контейнере>.
+      # Если 5432 занят локально установленным Postgres — поменять левое число
+      # (например 5433) и синхронно поправить DATABASE_URL в apps/api/.env.
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # pg_isready возвращает 0, когда сервер готов принимать соединения.
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d minimishki']
+      interval: 5s # как часто проверять
+      timeout: 5s # сколько ждать ответа проверки
+      retries: 10 # сколько неудач подряд до статуса unhealthy
+      start_period: 30s # «разогрев»: неудачи в этот период не считаются
+
+  # pgAdmin — веб-интерфейс к базе. Не поднимается по умолчанию:
+  # docker compose --profile tools up -d
+  pgadmin:
+    image: dpage/pgadmin4:9
+    container_name: minimishki-pgadmin
+    restart: unless-stopped
+    profiles: ['tools']
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@minimishki.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      # Desktop-режим: один пользователь, без экрана логина и мастер-пароля.
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      # Внутри контейнера pgAdmin слушает 80, наружу отдаём 5050.
+      - '5050:80'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  pgadmin:
