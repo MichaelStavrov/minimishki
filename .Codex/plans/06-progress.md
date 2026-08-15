@@ -4,19 +4,27 @@
 
 ## ▶️ Текущее состояние
 
-**Следующий шаг: № 6 — `packages/tsconfig`** (этап B).
+**Следующий шаг: № 7 — `packages/eslint-config`** (этап B).
 
 При старте новой сессии:
 1. Прочитать [`00-process.md`](./00-process.md) — требования к процессу работы.
-2. Выдать код шага 6: `packages/tsconfig` — `base.json`, `nextjs.json`, `nestjs.json`
-   и `package.json` пакета.
+2. Выдать код шага 7: `packages/eslint-config` — `base.js`, `next.js`, `nest.js`
+   и `package.json` пакета (flat config). В `next.js` — `import/no-restricted-paths`
+   с зонами по слоям FSD.
 3. Перед написанием версий пакетов проверять актуальные через `pnpm view <пакет> version`.
+   ⚠️ Для `typescript` брать ветку **6.x** (`^6.0.3`), а не `latest` — см. решение в таблице ниже.
 
 ### Что уже есть в `D:\programming\minimishki`
 
 ```
 .git/                    # репозиторий инициализирован
 .Codex/                  # контекст и планы проекта
+packages/
+└── tsconfig/            # @minimishki/tsconfig
+    ├── base.json
+    ├── nextjs.json
+    ├── nestjs.json
+    └── package.json
 .editorconfig
 .gitattributes
 .gitignore
@@ -54,7 +62,7 @@ turbo.json
 
 ### Этап B — общие пакеты ← **в работе**
 
-- [ ] Шаг 6 — `packages/tsconfig`
+- [x] Шаг 6 — `packages/tsconfig` *(15.08.2026)*
 - [ ] Шаг 7 — `packages/eslint-config`
 - [ ] Шаг 8 — `packages/shared` (без зависимости от Prisma)
 - [ ] 🔧 **КТ-1** — `pnpm install`
@@ -113,6 +121,12 @@ turbo.json
 |---|---|
 | **Терминал — git bash**, не PowerShell | Решение пользователя. Все команды в планах — в bash-синтаксисе. Пути: в заголовках шагов Windows-стиль (`D:\...`), внутри команд bash-стиль (`/d/...`) |
 | **Общие правила — в глобальном `AGENTS.md`** | `C:\Users\mihal\.Codex\AGENTS.md` действует во всех проектах. Проектные файлы содержат только специфику «Минимишек», без дублирования |
+| **TypeScript 6.x** (`^6.0.3`), а не 7.x | В npm `latest` — TS 7.0.2, нативный компилятор на Go (GA 08.07.2026). У него **нет программного API компилятора**, а на нём держатся `nest build`, `ts-node` (нужен для `prisma/seed.ts`), `ts-jest` и type-aware правила `typescript-eslint`. Проверено: `typescript-eslint@8.67.0` объявляет peer `typescript >=4.8.4 <6.1.0`. Возврат к 7.x — в [`08-backlog.md`](./08-backlog.md), после выхода 7.1 с программным API |
+| **В конфигах TS нет `baseUrl`, `moduleResolution: "node"`, `target: "es5"`** | Все три объявлены устаревшими в TS 6 и будут удалены в 7. Замена: `paths` без `baseUrl`, разрешение модулей — `NodeNext` (бэкенд) и `Bundler` (фронтенд) |
+| **В общем пакете `tsconfig` — только флаги, без путей** | Относительные пути (`outDir`, `rootDir`, `paths`, `include`, `exclude`) TypeScript резолвит относительно файла, где они **объявлены**, а не наследующего. `"outDir": "./dist"` в `packages/tsconfig/nestjs.json` собирал бы бэкенд внутрь пакета конфигов. Пути живут в `apps/*/tsconfig.json` |
+| **`strictPropertyInitialization: false`** только в `nestjs.json` | DTO для class-validator объявляют поля без инициализатора (`name: string`) — заполняет их `ValidationPipe` уже после создания объекта. При полном `strict` это `TS2564` на каждом поле в нескольких десятках DTO. Альтернатива (`name!: string` везде) отклонена как шум. Остальные строгие проверки сохранены, на `apps/web` послабление не распространяется |
+| **`verbatimModuleSyntax` на бэкенде не включаем** | Он подталкивает писать `import type` для классов, используемых только в аннотациях, — а именно эти аннотации `emitDecoratorMetadata` превращает в `design:paramtypes`. Стёртый импорт ломает DI, причём только в рантайме |
+| **Пакет `@minimishki/tsconfig` без поля `exports`** | С `exports` доступны только явно перечисленные подпути — пришлось бы вести список вручную. Без него `extends: "@minimishki/tsconfig/base.json"` резолвится обычным путём по файловой системе |
 | **Next.js 16**, а не 15 | У 15-й ветки Maintenance LTS до 21.10.2026 — через 2 месяца перестанут выходить security-патчи. 16 — Active LTS до октября 2027 |
 | **`packages/shared` не зависит от Prisma** | Иначе `@prisma/client` попал бы в клиентский бандл. В shared — свои `as const`-объекты, рассинхрон ловится проверкой типов на бэкенде |
 | **pnpm 10.x**, точная версия в `packageManager` | Corepack по ней подтягивает ровно этот менеджер, lock-файл не расходится между машинами |
@@ -211,3 +225,27 @@ turbo.json
 - Версия проверена командой: `prettier@3.9.6`.
 - Полная проверка форматирования отложена до **КТ-1** — бинарника `prettier`
   в `node_modules` пока нет.
+
+### Сессия 4 — 15.08.2026
+
+- Выполнен шаг 6: создан пакет `packages/tsconfig` — `package.json`, `base.json`,
+  `nextjs.json`, `nestjs.json`.
+- **Развилка по версии TypeScript.** При проверке версий выяснилось, что `latest`
+  в npm — TS 7.0.2 (нативный компилятор на Go, GA 08.07.2026), у которого нет
+  программного API компилятора: `nest build`, `ts-node`, `ts-jest` и type-aware правила
+  `typescript-eslint` на нём не работают. Проверено напрямую:
+  `typescript-eslint@8.67.0` → peer `typescript >=4.8.4 <6.1.0`;
+  `@nestjs/cli@11.0.24` тянет `typescript@5.9.3`. Решение: закрепить `typescript@^6.0.3`,
+  переход на 7.x — в бэклоге.
+- Уровень строгости выбран «строго без экзотики»: `strict: true` плюс `isolatedModules`,
+  `skipLibCheck`, `forceConsistentCasingInFileNames`, `noFallthroughCasesInSwitch`,
+  `esModuleInterop`. Без `noUncheckedIndexedAccess` и `exactOptionalPropertyTypes`.
+- **Поймана ошибка в собственном плане шага.** В `nestjs.json` был запланирован
+  `"outDir": "./dist"` — но относительные пути резолвятся относительно объявляющего
+  файла, и сборка ушла бы в `packages/tsconfig/dist/`. Путь перенесён в шаг 11
+  (`apps/api/tsconfig.json`). То же правило раньше уже применили к `paths` фронтенда.
+- Работа впервые ведётся по GitHub Flow: ветка `chore/tsconfig-package`, слияние
+  через PR (шаги 1–5 коммитились прямо в `main`).
+- Код-ревью шага пользователь не запрашивал.
+- Проверено: все четыре файла парсятся как JSON, `git status` видит `packages/`.
+  Симлинк `node_modules/@minimishki/tsconfig` и `pnpm format:check` — на **КТ-1**.
