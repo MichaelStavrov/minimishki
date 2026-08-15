@@ -1,0 +1,11 @@
+{
+  "name": "@minimishki/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Общие конфигурации TypeScript для монорепозитория «Минимишки»",
+  "files": [
+    "base.json",
+    "nextjs.json",
+    "nestjs.json"
+  ]
+}
