@@ -4,13 +4,22 @@
 
 ## ▶️ Текущее состояние
 
-**Следующий шаг: № 8 — `packages/shared`** (этап B, последний шаг перед КТ-1).
+**Следующий шаг: 🔧 КТ-1 — первая установка зависимостей.** Этап B закрыт.
 
 При старте новой сессии:
 1. Прочитать [`00-process.md`](./00-process.md) — требования к процессу работы.
-2. Выдать код шага 8: `packages/shared` — `package.json`, `tsconfig.json`,
-   `src/index.ts`, `src/enums.ts`, `src/dto/`. **Без зависимости от `@prisma/client`**.
-3. Перед написанием версий пакетов проверять актуальные через `pnpm view <пакет> version`.
+2. Выполнить КТ-1 (команды — в [`03-steps.md`](./03-steps.md)):
+   ```bash
+   cd /d/programming/minimishki
+   pnpm install
+   pnpm --filter @minimishki/shared build
+   pnpm format:check
+   ```
+   До установки редактор показывает `File '@minimishki/tsconfig/base.json' not found`
+   в `packages/shared/tsconfig.json` — это не ошибка файла, а отсутствующий симлинк.
+   После установки перезапустить TS-сервер в редакторе.
+3. Дальше — шаг 9 (`docker-compose.yml`), этап C, инфраструктура.
+4. Перед написанием версий пакетов проверять актуальные через `pnpm view <пакет> version`.
    ⚠️ Два пакета, где `latest` брать **нельзя**: `typescript` (нужна ветка **6.x**)
    и `eslint` (нужна ветка **9.x**) — см. решения в таблице ниже.
 
@@ -25,10 +34,24 @@ packages/
 │   ├── nextjs.json
 │   ├── nestjs.json
 │   └── package.json
-└── eslint-config/       # @minimishki/eslint-config
-    ├── base.js
-    ├── next.js
-    ├── nest.js
+├── eslint-config/       # @minimishki/eslint-config
+│   ├── base.js
+│   ├── next.js
+│   ├── nest.js
+│   └── package.json
+└── shared/              # @minimishki/shared
+    ├── src/
+    │   ├── index.ts
+    │   ├── enums.ts
+    │   └── dto/
+    │       ├── common.dto.ts
+    │       ├── user.dto.ts
+    │       ├── course.dto.ts
+    │       ├── teacher.dto.ts
+    │       ├── post.dto.ts
+    │       ├── gallery.dto.ts
+    │       └── lead.dto.ts
+    ├── tsconfig.json
     └── package.json
 .editorconfig
 .gitattributes
@@ -65,14 +88,14 @@ turbo.json
 - [x] Шаг 5 — `.prettierrc`, `.prettierignore`, `.gitattributes` + правка корневого
   `package.json` *(14.08.2026)*
 
-### Этап B — общие пакеты ← **в работе**
+### Этап B — общие пакеты ✅
 
 - [x] Шаг 6 — `packages/tsconfig` *(15.08.2026)*
 - [x] Шаг 7 — `packages/eslint-config` *(15.08.2026)*
-- [ ] Шаг 8 — `packages/shared` (без зависимости от Prisma)
+- [x] Шаг 8 — `packages/shared` (без зависимости от Prisma) *(15.08.2026)*
 - [ ] 🔧 **КТ-1** — `pnpm install`
 
-### Этап C — инфраструктура
+### Этап C — инфраструктура ← **следующий**
 
 - [ ] Шаг 9 — `docker-compose.yml`
 - [ ] Шаг 10 — `.env.example` + создание `.env` / `.env.local`
@@ -141,6 +164,13 @@ turbo.json
 | **Пакет `@minimishki/tsconfig` без поля `exports`** | С `exports` доступны только явно перечисленные подпути — пришлось бы вести список вручную. Без него `extends: "@minimishki/tsconfig/base.json"` резолвится обычным путём по файловой системе |
 | **Next.js 16**, а не 15 | У 15-й ветки Maintenance LTS до 21.10.2026 — через 2 месяца перестанут выходить security-патчи. 16 — Active LTS до октября 2027 |
 | **`packages/shared` не зависит от Prisma** | Иначе `@prisma/client` попал бы в клиентский бандл. В shared — свои `as const`-объекты, рассинхрон ловится проверкой типов на бэкенде |
+| **`shared` — компилируемый пакет с `dist/`**, а не source-only с `exports` на `src/*.ts` | Вариант «без сборки» (JIT-пакет, который рекомендует Vercel для Turborepo) удобнее в разработке, но ломает бэкенд: `nest build` через `tsc` не эмитит `.ts` из `node_modules`, файлы вне `rootDir` в вывод не попадают, и в рантайме `require('@minimishki/shared')` упирается в `.ts`. Обход потребовал бы `paths` в `apps/api` и сломал бы структуру `dist`. Цена решения: перед первым `pnpm dev` нужен `pnpm build`, при правке shared — пересборка или `pnpm --filter @minimishki/shared dev` (`tsc --watch`) |
+| **`"types": []` в `packages/shared/tsconfig.json`** | В `base.json` стоит `types: ["node"]`, но `@types/node` в зависимостях `shared` нет, а pnpm держит строгую изоляцию — `tsc` упал бы на `TS2688: Cannot find type definition file for 'node'` ещё до проверки кода. Добавлять `@types/node` ради неиспользуемых типов не стали: пакет уезжает в браузерный бандл, и пустой список заодно не даёт случайно дёрнуть `process.env` |
+| **В `shared/dto/` — только типы ответов API**, без типов тел запросов | Решение пользователя из двух предложенных вариантов. Валидация всё равно живёт в DTO-классах Nest с декораторами `class-validator`, которые на фронтенде неприменимы; общий тип запроса дублировал бы их и разъезжался с ними |
+| **Даты в DTO — `string`, а не `Date`** | По сети данные едут через `JSON.stringify` (дата → строка ISO 8601), а `JSON.parse` обратно в `Date` не разворачивает. С типом `Date` компилятор разрешил бы `createdAt.getFullYear()` на строке — падение в рантайме при зелёной сборке |
+| **`\| null` для nullable-полей, `?` — только для связей** | Необязательное поле Prisma (`imageUrl String?`) приходит как `null`, а не отсутствует. Знак `?` зарезервирован под другой случай: связи (`teachers`, `gallery`, `course`) приходят только при запросе с `include`, то есть одна сущность приезжает в двух формах |
+| **Суффикс `Dto` в именах типов** (`CourseDto`, а не `Course`) | На бэкенде в одном файле окажутся и модель Prisma `Course`, и тип ответа. Одинаковые имена там гарантируют путаницу |
+| **Поимённые реэкспорты в `shared/src/index.ts`**, без `export *` | Файл читается как оглавление публичного API пакета, и новый тип не протекает наружу просто потому, что кто-то создал файл в `src/dto/`. Тот же принцип, что у публичного API слайса в FSD |
 | **pnpm 10.x**, точная версия в `packageManager` | Corepack по ней подтягивает ровно этот менеджер, lock-файл не расходится между машинами |
 | **Turborepo 2.x — ключ `tasks`** | `pipeline` устарел с v2, конфиг с ним не запускается |
 | **Контрольные точки установки (КТ-1…КТ-4)** | Backend-код шагов 13–20 без сгенерированного Prisma-клиента не типизируется — писать его вслепую нельзя |
@@ -284,3 +314,31 @@ turbo.json
   с включением `prisma/seed.ts` — `TS6059: File is not under rootDir`. Решать
   отсутствием `rootDir` либо отдельным `tsconfig` для сида.
 - Код-ревью шага пользователь не запрашивал.
+
+### Сессия 5 — 15.08.2026
+
+- Выполнен шаг 8: создан пакет `packages/shared` — `package.json`, `tsconfig.json`,
+  `src/enums.ts`, `src/index.ts` и семь файлов в `src/dto/`. **Этап B закрыт.**
+- **Две развилки вынесены пользователю** (обе занесены в таблицу решений):
+  способ поставки пакета — компилируемый `dist/` против source-only,
+  и объём `dto/` — только ответы против ответов вместе с типами запросов.
+  Выбраны первый и первый.
+- Версия проверена командой: в ветке 6.x последняя — `typescript@6.0.3`
+  (в npm `latest` по-прежнему 7.0.2, берём не его).
+- `ROLE` и `LEAD_STATUS` — `as const`-объекты вместо `enum` TypeScript: `enum` —
+  единственная конструкция TS, которая не стирается при компиляции, а разворачивается
+  в объект с двусторонним отображением. В пакете, уезжающем в браузер, это лишний рантайм.
+- Циклическая ссылка `course.dto.ts` ↔ `teacher.dto.ts` безопасна: импорты помечены
+  `import type` и стираются, в JavaScript цикла не остаётся.
+- Проверено, что правило `dist/` в `.gitignore` действует на любом уровне вложенности —
+  `packages/shared/dist/` в коммит не попадёт, отдельная запись не нужна.
+- **Открытый вопрос для шага 11:** задача `dev` в `turbo.json` не имеет `dependsOn`,
+  поэтому на чистом репозитории API стартует раньше, чем соберётся `shared`,
+  и падает на `Cannot find module '@minimishki/shared'`. Варианты: разовый `pnpm build`
+  перед первым `pnpm dev` либо `"dependsOn": ["^build"]` в задаче `dev`.
+  Правка `turbo.json` меняет принятое решение — выносится пользователю на шаге 11.
+- Компиляция пакета **не проверена**: `tsc` в проекте пока нет. Проверка —
+  на КТ-1 командой `pnpm --filter @minimishki/shared build`.
+- Код-ревью шага пользователь не запрашивал.
+- Ветка `chore/shared-package`, слияние локальным merge-коммитом:
+  удалённого репозитория у проекта нет, PR технически невозможен.
