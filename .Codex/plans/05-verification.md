@@ -179,6 +179,16 @@ curl -X POST http://localhost:3001/api/auth/login \
 
 **Ожидаем:** health → `200`; login → объект с `accessToken`.
 
+Проверить закрытые маршруты без действительного JWT:
+
+```bash
+curl -i http://localhost:3001/api/auth/me
+curl -i http://localhost:3001/api/users
+curl -i -H 'Authorization: Bearer invalid' http://localhost:3001/api/auth/me
+```
+
+**Ожидаем:** три ответа `401`; каждый содержит `statusCode`, `message` и `error`.
+
 Запрос с токеном:
 
 ```bash
@@ -189,6 +199,8 @@ TOKEN=$(curl -s -X POST http://localhost:3001/api/auth/login \
 
 curl -H "Authorization: Bearer $TOKEN" http://localhost:3001/api/auth/me
 ```
+
+**Ожидаем:** `200` и актуальный `UserDto` без `passwordHash`.
 
 ### 8. Проверить качество кода
 

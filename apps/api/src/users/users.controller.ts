@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 
-import type { Paginated, UserDto } from '@minimishki/shared';
+import { ROLE, type Paginated, type UserDto } from '@minimishki/shared';
 
+import { Roles } from '../auth/decorators/roles.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersDto } from './dto/list-users.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -14,10 +15,8 @@ import { UsersService } from './users.service';
  * emitDecoratorMetadata записывает ссылку на класс в design:paramtypes, оттуда её
  * читает ValidationPipe. Стёртый импорт оставил бы в метаданных Object — валидация
  * молча перестала бы работать, без единой ошибки при запуске.
- *
- * TODO (шаг 18): @Roles(ROLE.ADMIN) на все маршруты. До появления guard'ов
- * POST открыт всем и позволяет создать пользователя с ролью ADMIN.
  */
+@Roles(ROLE.ADMIN)
 @Controller('users')
 export class UsersController {
   constructor(private readonly users: UsersService) {}

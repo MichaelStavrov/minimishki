@@ -264,6 +264,8 @@ curl http://localhost:3001/api/health
 `src/auth/auth.module.ts`, `auth.service.ts`, `auth.controller.ts`, `dto/login.dto.ts`.
 
 - сверка хеша пароля через `argon2` (хеширование при записи уже делает `UsersService`)
+- для неизвестного email — `argon2.verify` с фиктивным валидным хешем, чтобы время
+  ответа не выдавало существование аккаунта
 - `validateUser` — сверка пароля с хешем
 - выдача JWT
 - `POST /api/auth/login`
@@ -277,14 +279,17 @@ curl http://localhost:3001/api/health
 
 - `JwtAuthGuard` регистрируется **глобально** через `APP_GUARD`
 - `@Public()` — на базе `SetMetadata` + `Reflector`
-- `RolesGuard` + `@Roles(Role.ADMIN)`
+- `RolesGuard` + `@Roles(ROLE.ADMIN)`
 - `GET /api/auth/me` на базе JWT-стратегии и `@CurrentUser()`
+- `JwtAuthGuard.handleRequest()` нормализует `401` под общий `ApiErrorDto`
 
 Объяснить: устройство JWT (header.payload.signature, что подписывается и что нет,
 почему в токен нельзя класть секреты); что такое guard и стратегия Passport;
 почему «закрыто по умолчанию, открыто явно» безопаснее обратного.
 
-**Проверить:** `GET /api/users` без токена → `401`; с токеном из `/auth/login` → `200`.
+**Проверить:** health и login без токена → `200`; users и auth/me без токена → `401`
+с полями `statusCode`, `message`, `error`; users с JWT `ADMIN` → `200`, с JWT `USER` → `403`;
+испорченный и просроченный JWT → `401`.
 
 ### Шаг 19. Seed-данные
 `prisma/seed.ts` — администратор и демо-данные.

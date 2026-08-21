@@ -127,7 +127,7 @@
 ```ini
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/minimishki?schema=public"
 JWT_SECRET="<сгенерировать>"
-JWT_EXPIRES_IN="7d"
+JWT_EXPIRES_IN="30d"
 PORT=3001
 NODE_ENV=development
 ```
