@@ -12,6 +12,9 @@ export type { Role, LeadStatus } from './enums';
 // Служебные обёртки ответов API
 export type { Paginated, ApiErrorDto } from './dto/common.dto';
 
+// Аутентификация
+export type { LoginResponseDto } from './dto/auth.dto';
+
 // Сущности домена
 export type { UserDto } from './dto/user.dto';
 export type { CourseDto } from './dto/course.dto';

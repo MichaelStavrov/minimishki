@@ -261,12 +261,12 @@ curl http://localhost:3001/api/health
 Обязательно — почему `passwordHash` никогда не уходит клиенту (`select` в Prisma).
 
 ### Шаг 17. Аутентификация, часть 1
-`src/auth/auth.service.ts`, `auth.controller.ts`, `dto/login.dto.ts`.
+`src/auth/auth.module.ts`, `auth.service.ts`, `auth.controller.ts`, `dto/login.dto.ts`.
 
-- хеширование пароля через `argon2`
+- сверка хеша пароля через `argon2` (хеширование при записи уже делает `UsersService`)
 - `validateUser` — сверка пароля с хешем
 - выдача JWT
-- `POST /api/auth/login`, `GET /api/auth/me`
+- `POST /api/auth/login`
 
 Объяснить: почему пароли хешируют, а не шифруют; чем argon2 лучше bcrypt;
 что такое соль и почему она внутри хеша.
@@ -278,6 +278,7 @@ curl http://localhost:3001/api/health
 - `JwtAuthGuard` регистрируется **глобально** через `APP_GUARD`
 - `@Public()` — на базе `SetMetadata` + `Reflector`
 - `RolesGuard` + `@Roles(Role.ADMIN)`
+- `GET /api/auth/me` на базе JWT-стратегии и `@CurrentUser()`
 
 Объяснить: устройство JWT (header.payload.signature, что подписывается и что нет,
 почему в токен нельзя класть секреты); что такое guard и стратегия Passport;

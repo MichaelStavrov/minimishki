@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/** Поддерживаемые проектом единицы срока жизни JWT. */
+type JwtExpiresIn = `${number}${'s' | 'm' | 'h' | 'd'}`;
+
 /**
  * Схема переменных окружения apps/api.
  * Каждое поле здесь обязано иметь пару в apps/api/.env.example.
@@ -17,10 +20,16 @@ const envSchema = z.object({
     .string()
     .min(32, 'JWT_SECRET: не короче 32 символов, см. комментарий в .env.example'),
 
-  // Срок жизни токена в формате, который понимает @nestjs/jwt: 60s, 15m, 12h, 30d.
+  /**
+   * z.custom одновременно проверяет значение в рантайме и сообщает TypeScript
+   * точный шаблон строки. Обычный .regex() сохранил бы слишком широкий тип string,
+   * который нельзя безопасно передать в @nestjs/jwt.
+   */
   JWT_EXPIRES_IN: z
-    .string()
-    .regex(/^\d+[smhd]$/, 'JWT_EXPIRES_IN: число и единица времени — 60s, 15m, 12h, 30d')
+    .custom<JwtExpiresIn>(
+      (value) => typeof value === 'string' && /^\d+[smhd]$/.test(value),
+      'JWT_EXPIRES_IN: число и единица времени — 60s, 15m, 12h, 30d',
+    )
     .default('30d'),
 
   // Порт HTTP-сервера. Из process.env приходит строкой, coerce приводит к числу.
