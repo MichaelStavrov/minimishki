@@ -27,8 +27,8 @@ const envSchema = z.object({
    */
   JWT_EXPIRES_IN: z
     .custom<JwtExpiresIn>(
-      (value) => typeof value === 'string' && /^\d+[smhd]$/.test(value),
-      'JWT_EXPIRES_IN: число и единица времени — 60s, 15m, 12h, 30d',
+      (value) => typeof value === 'string' && /^[1-9]\d*[smhd]$/.test(value),
+      'JWT_EXPIRES_IN: положительное число и единица времени — 60s, 15m, 12h, 30d',
     )
     .default('30d'),
 
