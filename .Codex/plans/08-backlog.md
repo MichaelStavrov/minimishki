@@ -92,6 +92,8 @@
 
 ## Приоритет 6. Деплой
 
+- Отдельный production-bootstrap первого администратора без demo-данных и без
+  сброса существующего пароля/роли при повторном запуске
 - `Dockerfile` для `apps/api` (multi-stage, prod-зависимости)
 - `Dockerfile` для `apps/web` (standalone-режим Next.js)
 - `docker-compose.prod.yml` — приложения + postgres + reverse-proxy
