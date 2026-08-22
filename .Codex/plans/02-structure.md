@@ -66,7 +66,7 @@ minimishki/
 │       │   │   └── dto/
 │       │   │
 │       │   └── modules/              # ── доменные модули ──
-│       │       ├── courses/
+│       │       ├── services/
 │       │       ├── teachers/
 │       │       ├── leads/
 │       │       ├── posts/
@@ -134,10 +134,10 @@ minimishki/
 | Слой | Что внутри | Пример из «Минимишек» |
 |---|---|---|
 | `_app` | Инициализация: провайдеры, глобальные стили | `providers.tsx`, `globals.css` |
-| `_pages` | Сборка страницы из нижних слоёв, своей логики почти нет | `home/`, `courses/`, `course-detail/` |
-| `widgets` | Самостоятельные блоки страницы | `header/`, `footer/`, `courses-preview/` |
+| `_pages` | Сборка страницы из нижних слоёв, своей логики почти нет | `home/`, `services/`, `service-detail/` |
+| `widgets` | Самостоятельные блоки страницы | `header/`, `footer/`, `services-preview/` |
 | `features` | Действия пользователя, меняющие состояние системы | `submit-lead/`, `change-lead-status/` |
-| `entities` | Бизнес-сущности и их представление | `course/`, `teacher/`, `lead/` |
+| `entities` | Бизнес-сущности и их представление | `service/`, `teacher/`, `lead/` |
 | `shared` | Переиспользуемое, не привязанное к домену | `ui/` (shadcn), `api/`, `lib/cn.ts` |
 
 Внутри слоя — **слайсы** (папки по домену), внутри слайса — **сегменты**
@@ -155,8 +155,8 @@ minimishki/
 и больше ничего не делает.
 
 ```tsx
-// app/courses/page.tsx
-export { CoursesPage as default } from '@/_pages/courses';
+// app/services/page.tsx
+export { ServicesPage as default } from '@/_pages/services';
 ```
 
 **Слои заводятся по мере надобности.** Обязателен только `shared`; пустых папок
@@ -175,7 +175,7 @@ export { CoursesPage as default } from '@/_pages/courses';
 | Тип | Где лежит | Признак |
 |---|---|---|
 | **Инфраструктурные** | `src/` напрямую — `config/`, `prisma/`, `health/`, `auth/`, `users/` | Пересекают все домены. `auth` защищает любой контроллер, `prisma` даёт доступ к БД отовсюду, `users` — фундамент аутентификации |
-| **Доменные** | `src/modules/` — `courses/`, `teachers/`, `leads/`, `posts/`, `gallery/` | Отражают конкретные сущности детского центра. Их можно добавлять и удалять, не трогая остальную систему |
+| **Доменные** | `src/modules/` — `services/`, `teachers/`, `leads/`, `posts/`, `gallery/` | Отражают конкретные сущности детского центра. Их можно добавлять и удалять, не трогая остальную систему |
 
 Практическое следствие: **новую сущность сайта** (например, «Расписание») заводим
 в `src/modules/`, **новый сквозной механизм** (например, загрузку файлов) — в `src/`.
@@ -186,13 +186,13 @@ export { CoursesPage as default } from '@/_pages/courses';
 [`07-conventions.md`](./07-conventions.md):
 
 ```
-courses/
-├── courses.module.ts
-├── courses.service.ts       # работа с Prisma
-├── courses.controller.ts    # HTTP-роуты
+services/
+├── services.module.ts
+├── services.service.ts       # работа с Prisma
+├── services.controller.ts    # HTTP-роуты
 └── dto/
-    ├── create-course.dto.ts
-    └── update-course.dto.ts # PartialType(CreateCourseDto)
+    ├── create-service.dto.ts
+    └── update-service.dto.ts # PartialType(CreateServiceDto)
 ```
 
 ---

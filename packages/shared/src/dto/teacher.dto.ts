@@ -1,6 +1,6 @@
-import type { CourseDto } from './course.dto';
+import type { ServiceDto } from './service.dto';
 
-/** Педагог центра */
+/** Педагог детского центра */
 export interface TeacherDto {
   id: string;
   slug: string;
@@ -14,5 +14,5 @@ export interface TeacherDto {
   updatedAt: string;
 
   /** Приходит только при запросе с `include` */
-  courses?: CourseDto[];
+  services?: ServiceDto[];
 }

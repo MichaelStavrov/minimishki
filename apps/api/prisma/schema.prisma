@@ -21,8 +21,37 @@ enum Role {
 enum LeadStatus {
   NEW         // новая заявка
   IN_PROGRESS // менеджер связался
-  CONFIRMED   // записан на занятие
+  CONFIRMED   // запись подтверждена
   REJECTED    // отказ
+}
+
+enum PriceType {
+  FIXED      // фиксированная цена
+  FROM       // цена «от»
+  FREE       // бесплатно
+  INCLUDED   // входит в стоимость
+  ON_REQUEST // рассчитывается индивидуально
+}
+
+enum ScheduleType {
+  RECURRING  // регулярное расписание
+  ON_REQUEST // время определяется по согласованию
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum AgeMode {
+  INHERIT // использовать возраст услуги
+  CUSTOM  // использовать собственный диапазон
+  NONE    // возрастных ограничений нет
 }
 
 // ============================================================
@@ -42,36 +71,111 @@ model User {
 }
 
 // ============================================================
-// Контент сайта
+// Услуги
 // ============================================================
 
-/// Направление / программа детского центра
-model Course {
-  id          String   @id @default(cuid())
-  slug        String   @unique // ЧПУ: /courses/razvivayushchie-zanyatiya
-  title       String
-  description String
-  ageFrom     Int // возраст от, лет
-  ageTo       Int // возраст до, лет
-  price       Int // рубли, целое число
-  imageUrl    String?
-  isPublished Boolean  @default(false)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+/// Публичная страница услуги детского центра
+model Service {
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  title          String
+  summary        String?
+  contentHtml    String
+  ageFromMonths  Int?
+  ageToMonths    Int?
+  ageNote        String?
+  coverUrl       String?
+  seoTitle       String?
+  seoDescription String?
+  isPublished    Boolean   @default(false)
+  archivedAt     DateTime?
+  sortOrder      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  teachers Teacher[] // неявная many-to-many
-  leads    Lead[] // обратная сторона Lead.course
+  offerGroups ServiceOfferGroup[]
+  schedules   ServiceSchedule[]
+  teachers    Teacher[]
+  gallery     GalleryItem[]
+  leads       Lead[]
 
-  @@index([isPublished, sortOrder])
+  @@index([isPublished, archivedAt, sortOrder])
 }
 
-/// Педагог центра
+/// Группа предложений внутри услуги: например, «Абонементы» или «Мастер-классы»
+model ServiceOfferGroup {
+  id              String   @id @default(cuid())
+  serviceId       String
+  title           String
+  descriptionHtml String?
+  isPublished     Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  service Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  offers  ServiceOffer[]
+
+  @@index([serviceId, isPublished, sortOrder])
+}
+
+/// Конкретный тариф, программа или вариант услуги
+model ServiceOffer {
+  id              String    @id @default(cuid())
+  groupId         String
+  title           String
+  descriptionHtml String?
+  imageUrl        String?
+  priceType       PriceType
+  amount          Int?
+  priceUnit       String?
+  priceNote       String?
+  durationMinutes Int?
+  ageMode         AgeMode   @default(INHERIT)
+  ageFromMonths   Int?
+  ageToMonths     Int?
+  ageNote         String?
+  isPublished     Boolean   @default(false)
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  group ServiceOfferGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, isPublished, sortOrder])
+}
+
+/// Вариант регулярного расписания либо запись «по согласованию»
+model ServiceSchedule {
+  id           String       @id @default(cuid())
+  serviceId    String
+  scheduleType ScheduleType
+  daysOfWeek   DayOfWeek[]  @default([])
+  startTime    String?
+  endTime      String?
+  validFrom    DateTime?    @db.Date
+  validUntil   DateTime?    @db.Date
+  label        String?
+  isPublished  Boolean      @default(false)
+  sortOrder    Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId, isPublished, sortOrder])
+}
+
+// ============================================================
+// Остальной контент сайта
+// ============================================================
+
+/// Педагог детского центра
 model Teacher {
   id          String   @id @default(cuid())
   slug        String   @unique
   fullName    String
-  position    String // «педагог-психолог»
+  position    String
   bio         String?
   photoUrl    String?
   isPublished Boolean  @default(false)
@@ -79,17 +183,17 @@ model Teacher {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  courses Course[] // обратная сторона Course.teachers
+  services Service[]
 
   @@index([isPublished, sortOrder])
 }
 
-/// Новость центра
+/// Новость или анонс центра
 model Post {
   id          String    @id @default(cuid())
   slug        String    @unique
   title       String
-  excerpt     String? // краткий анонс для карточки в списке
+  excerpt     String?
   content     String
   coverUrl    String?
   isPublished Boolean   @default(false)
@@ -97,33 +201,41 @@ model Post {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  gallery GalleryItem[] // фото к новости
+  gallery GalleryItem[]
 
   @@index([isPublished, publishedAt])
 }
 
-/// Фотография: либо привязана к новости, либо лежит в общей галерее
+/// Фотография новости, услуги либо общей галереи
 model GalleryItem {
-  id        String   @id @default(cuid())
-  url       String
-  alt       String? // alt-текст: SEO и доступность
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  url         String
+  alt         String?
+  caption     String?
+  isPublished Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   postId String?
   post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@index([postId, sortOrder])
+  serviceId String?
+  service   Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([postId, isPublished, sortOrder])
+  @@index([serviceId, isPublished, sortOrder])
+  @@index([isPublished, sortOrder])
 }
 
 // ============================================================
 // Заявки
 // ============================================================
 
-/// Заявка на пробное занятие с формы на сайте
+/// Заявка с публичной формы сайта
 model Lead {
   id        String     @id @default(cuid())
-  name      String // имя родителя
+  name      String
   phone     String
   childName String?
   childAge  Int?
@@ -132,9 +244,9 @@ model Lead {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  courseId String?
-  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  serviceId String?
+  service   Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
-  @@index([courseId])
+  @@index([serviceId])
 }
