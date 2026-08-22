@@ -1,9 +1,10 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import * as argon2 from 'argon2';
 
 import type { Paginated, UserDto } from '@minimishki/shared';
 
+import { toDomainError } from '../common/prisma-error';
 import { serialize } from '../common/serialize';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -36,6 +37,11 @@ const USER_AUTH_SELECT = {
 
 /** Форма выводится из самого select: правка списка полей меняет тип автоматически */
 export type UserWithHash = Prisma.UserGetPayload<{ select: typeof USER_AUTH_SELECT }>;
+
+const USER_ERROR_MESSAGES = {
+  unique: 'Пользователь с таким email уже существует',
+  notFound: 'Пользователь не найден',
+};
 
 /**
  * PostgreSQL сравнивает строки с учётом регистра: Ivan@mail.ru и ivan@mail.ru —
@@ -100,7 +106,7 @@ export class UsersService {
 
       return serialize(user);
     } catch (error) {
-      throw this.toDomainError(error);
+      throw toDomainError(error, USER_ERROR_MESSAGES);
     }
   }
 
@@ -136,7 +142,7 @@ export class UsersService {
 
       return serialize(user);
     } catch (error) {
-      throw this.toDomainError(error);
+      throw toDomainError(error, USER_ERROR_MESSAGES);
     }
   }
 
@@ -144,13 +150,13 @@ export class UsersService {
     try {
       await this.prisma.user.delete({ where: { id } });
     } catch (error) {
-      throw this.toDomainError(error);
+      throw toDomainError(error, USER_ERROR_MESSAGES);
     }
   }
 
   /**
    * Единственный метод, отдающий passwordHash. Имя громкое намеренно — вызов видно
-   * на ревью. Нужен AuthService (шаг 17), контроллер его не вызывает.
+   * на ревью. Нужен AuthService, контроллер его не вызывает.
    *
    * Модель целиком не возвращается: белый список защищает и от полей, которые
    * появятся в схеме позже, — иначе они уедут в ответ через /auth/me.
@@ -160,27 +166,5 @@ export class UsersService {
       where: { email: normalizeEmail(email) },
       select: USER_AUTH_SELECT,
     });
-  }
-
-  /**
-   * Перевод кодов Prisma в исключения Nest по таблице из 07-conventions.md.
-   *
-   * Метод возвращает ошибку, а не бросает: в catch попадает unknown (в JS бросить
-   * можно что угодно), а правило only-throw-error запрещает бросать unknown.
-   */
-  private toDomainError(error: unknown): Error {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Нарушен уникальный индекс; у User он один — email
-      if (error.code === 'P2002') {
-        return new ConflictException('Пользователь с таким email уже существует');
-      }
-
-      // Запись под изменение или удаление не найдена
-      if (error.code === 'P2025') {
-        return new NotFoundException('Пользователь не найден');
-      }
-    }
-
-    return error instanceof Error ? error : new Error(String(error));
   }
 }
