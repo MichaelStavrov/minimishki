@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from '@prisma/client';
+import { AgeMode, DayOfWeek, PriceType, PrismaClient, Role, ScheduleType } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { z } from 'zod';
 
@@ -80,72 +80,262 @@ async function seedAdmin(): Promise<void> {
   console.log(`Администратор создан или обновлён: ${credentials.email}`);
 }
 
-async function seedCourses(): Promise<Map<string, string>> {
-  const courses = [
+async function seedServices(): Promise<Map<string, string>> {
+  const services = [
     {
       slug: 'rannee-razvitie',
       title: 'Раннее развитие',
-      description: 'Игровые занятия для развития речи, внимания, памяти и мелкой моторики.',
-      ageFrom: 2,
-      ageTo: 4,
-      price: 1200,
-      imageUrl: '/images/demo/courses/rannee-razvitie.jpg',
+      summary: 'Игровые занятия для развития речи, внимания, памяти и мелкой моторики.',
+      contentHtml:
+        '<p>На занятиях дети знакомятся с окружающим миром, развивают речь, внимание, память и мелкую моторику через игру.</p>',
+      ageFromMonths: 18,
+      ageToMonths: 48,
+      ageNote: null,
+      coverUrl: '/images/demo/services/rannee-razvitie.jpg',
+      seoTitle: 'Раннее развитие детей',
+      seoDescription: 'Игровые развивающие занятия для детей от полутора до четырёх лет.',
       isPublished: true,
+      archivedAt: null,
       sortOrder: 10,
+      offerGroups: [
+        {
+          title: 'Варианты занятий',
+          descriptionHtml: null,
+          isPublished: true,
+          sortOrder: 10,
+          offers: {
+            create: [
+              {
+                title: 'Разовое занятие',
+                descriptionHtml: null,
+                imageUrl: null,
+                priceType: PriceType.FIXED,
+                amount: 120_000,
+                priceUnit: 'за занятие',
+                priceNote: null,
+                durationMinutes: 60,
+                ageMode: AgeMode.INHERIT,
+                ageFromMonths: null,
+                ageToMonths: null,
+                ageNote: null,
+                isPublished: true,
+                sortOrder: 10,
+              },
+              {
+                title: 'Абонемент на четыре занятия',
+                descriptionHtml:
+                  '<p>Подходит для регулярного посещения занятий в течение месяца.</p>',
+                imageUrl: null,
+                priceType: PriceType.FROM,
+                amount: 400_000,
+                priceUnit: 'за абонемент',
+                priceNote: 'Итоговая стоимость зависит от выбранной группы.',
+                durationMinutes: 60,
+                ageMode: AgeMode.INHERIT,
+                ageFromMonths: null,
+                ageToMonths: null,
+                ageNote: null,
+                isPublished: true,
+                sortOrder: 20,
+              },
+            ],
+          },
+        },
+      ],
+      schedules: [
+        {
+          scheduleType: ScheduleType.RECURRING,
+          daysOfWeek: [DayOfWeek.TUESDAY, DayOfWeek.THURSDAY],
+          startTime: '10:00',
+          endTime: '11:00',
+          validFrom: null,
+          validUntil: null,
+          label: null,
+          isPublished: true,
+          sortOrder: 10,
+        },
+      ],
+      gallery: [
+        {
+          url: '/images/demo/gallery/rannee-razvitie-1.jpg',
+          alt: 'Дети занимаются в группе раннего развития',
+          caption: 'Игровое занятие в группе раннего развития',
+          isPublished: true,
+          sortOrder: 10,
+        },
+      ],
     },
     {
       slug: 'podgotovka-k-shkole',
       title: 'Подготовка к школе',
-      description:
-        'Знакомство с чтением, письмом и математикой через понятные ребёнку игровые задания.',
-      ageFrom: 5,
-      ageTo: 7,
-      price: 1500,
-      imageUrl: '/images/demo/courses/podgotovka-k-shkole.jpg',
+      summary: 'Знакомство с чтением, письмом и математикой через игровые задания.',
+      contentHtml:
+        '<p>Программа помогает ребёнку подготовиться к школьной нагрузке, развить самостоятельность и интерес к обучению.</p>',
+      ageFromMonths: 60,
+      ageToMonths: 84,
+      ageNote: null,
+      coverUrl: '/images/demo/services/podgotovka-k-shkole.jpg',
+      seoTitle: 'Подготовка к школе',
+      seoDescription: 'Занятия по подготовке к школе для детей от пяти до семи лет.',
       isPublished: true,
+      archivedAt: null,
       sortOrder: 20,
+      offerGroups: [
+        {
+          title: 'Занятия',
+          descriptionHtml: null,
+          isPublished: true,
+          sortOrder: 10,
+          offers: {
+            create: [
+              {
+                title: 'Разовое занятие',
+                descriptionHtml: null,
+                imageUrl: null,
+                priceType: PriceType.FIXED,
+                amount: 150_000,
+                priceUnit: 'за занятие',
+                priceNote: null,
+                durationMinutes: 60,
+                ageMode: AgeMode.INHERIT,
+                ageFromMonths: null,
+                ageToMonths: null,
+                ageNote: null,
+                isPublished: true,
+                sortOrder: 10,
+              },
+            ],
+          },
+        },
+      ],
+      schedules: [
+        {
+          scheduleType: ScheduleType.RECURRING,
+          daysOfWeek: [DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY],
+          startTime: '17:00',
+          endTime: '18:00',
+          validFrom: null,
+          validUntil: null,
+          label: null,
+          isPublished: true,
+          sortOrder: 10,
+        },
+      ],
+      gallery: [],
     },
     {
       slug: 'tvorcheskaya-masterskaya',
       title: 'Творческая мастерская',
-      description: 'Рисование, лепка и работа с разными материалами для развития воображения.',
-      ageFrom: 4,
-      ageTo: 10,
-      price: 1000,
-      imageUrl: '/images/demo/courses/tvorcheskaya-masterskaya.jpg',
+      summary: 'Рисование, лепка и работа с разными материалами.',
+      contentHtml:
+        '<p>На творческих занятиях дети пробуют разные материалы и техники, развивают воображение и учатся выражать собственные идеи.</p>',
+      ageFromMonths: 48,
+      ageToMonths: 120,
+      ageNote: null,
+      coverUrl: '/images/demo/services/tvorcheskaya-masterskaya.jpg',
+      seoTitle: 'Творческая мастерская для детей',
+      seoDescription: 'Творческие занятия для детей от четырёх до десяти лет.',
       isPublished: true,
+      archivedAt: null,
       sortOrder: 30,
+      offerGroups: [
+        {
+          title: 'Мастер-классы',
+          descriptionHtml: '<p>Темы и материалы мастер-классов регулярно обновляются.</p>',
+          isPublished: true,
+          sortOrder: 10,
+          offers: {
+            create: [
+              {
+                title: 'Тематический мастер-класс',
+                descriptionHtml: null,
+                imageUrl: null,
+                priceType: PriceType.ON_REQUEST,
+                amount: null,
+                priceUnit: 'за участника',
+                priceNote: 'Стоимость зависит от темы и используемых материалов.',
+                durationMinutes: 90,
+                ageMode: AgeMode.CUSTOM,
+                ageFromMonths: 72,
+                ageToMonths: 144,
+                ageNote: 'Сложность программы адаптируется под возраст группы.',
+                isPublished: true,
+                sortOrder: 10,
+              },
+            ],
+          },
+        },
+      ],
+      schedules: [
+        {
+          scheduleType: ScheduleType.ON_REQUEST,
+          daysOfWeek: [],
+          startTime: null,
+          endTime: null,
+          validFrom: null,
+          validUntil: null,
+          label: 'Дата и время мастер-класса согласовываются с группой',
+          isPublished: true,
+          sortOrder: 10,
+        },
+      ],
+      gallery: [],
     },
   ];
 
-  const courseIds = new Map<string, string>();
+  const serviceIds = new Map<string, string>();
 
-  for (const course of courses) {
-    const savedCourse = await prisma.course.upsert({
-      where: { slug: course.slug },
-      update: course,
-      create: course,
+  for (const { offerGroups, schedules, gallery, ...service } of services) {
+    const savedService = await prisma.service.upsert({
+      where: { slug: service.slug },
+      update: {
+        ...service,
+        offerGroups: {
+          deleteMany: {},
+          create: offerGroups,
+        },
+        schedules: {
+          deleteMany: {},
+          create: schedules,
+        },
+        gallery: {
+          deleteMany: {},
+          create: gallery,
+        },
+      },
+      create: {
+        ...service,
+        offerGroups: {
+          create: offerGroups,
+        },
+        schedules: {
+          create: schedules,
+        },
+        gallery: {
+          create: gallery,
+        },
+      },
     });
 
-    courseIds.set(savedCourse.slug, savedCourse.id);
+    serviceIds.set(savedService.slug, savedService.id);
   }
 
-  console.log(`Направления созданы или обновлены: ${courses.length}`);
+  console.log(`Услуги созданы или обновлены: ${services.length}`);
 
-  return courseIds;
+  return serviceIds;
 }
 
-function getCourseId(courseIds: ReadonlyMap<string, string>, slug: string): string {
-  const courseId = courseIds.get(slug);
+function getServiceId(serviceIds: ReadonlyMap<string, string>, slug: string): string {
+  const serviceId = serviceIds.get(slug);
 
-  if (courseId === undefined) {
-    throw new Error(`Seed не нашёл направление со slug "${slug}"`);
+  if (serviceId === undefined) {
+    throw new Error(`Seed не нашёл услугу со slug "${slug}"`);
   }
 
-  return courseId;
+  return serviceId;
 }
 
-async function seedTeachers(courseIds: ReadonlyMap<string, string>): Promise<void> {
+async function seedTeachers(serviceIds: ReadonlyMap<string, string>): Promise<void> {
   const teachers = [
     {
       slug: 'elena-sokolova',
@@ -155,7 +345,7 @@ async function seedTeachers(courseIds: ReadonlyMap<string, string>): Promise<voi
       photoUrl: '/images/demo/teachers/elena-sokolova.jpg',
       isPublished: true,
       sortOrder: 10,
-      courseSlugs: ['rannee-razvitie', 'podgotovka-k-shkole'],
+      serviceSlugs: ['rannee-razvitie', 'podgotovka-k-shkole'],
     },
     {
       slug: 'maria-lebedeva',
@@ -165,27 +355,27 @@ async function seedTeachers(courseIds: ReadonlyMap<string, string>): Promise<voi
       photoUrl: '/images/demo/teachers/maria-lebedeva.jpg',
       isPublished: true,
       sortOrder: 20,
-      courseSlugs: ['rannee-razvitie', 'tvorcheskaya-masterskaya'],
+      serviceSlugs: ['rannee-razvitie', 'tvorcheskaya-masterskaya'],
     },
   ];
 
-  for (const { courseSlugs, ...teacher } of teachers) {
-    const connectedCourses = courseSlugs.map((slug) => ({
-      id: getCourseId(courseIds, slug),
+  for (const { serviceSlugs, ...teacher } of teachers) {
+    const connectedServices = serviceSlugs.map((slug) => ({
+      id: getServiceId(serviceIds, slug),
     }));
 
     await prisma.teacher.upsert({
       where: { slug: teacher.slug },
       update: {
         ...teacher,
-        courses: {
-          set: connectedCourses,
+        services: {
+          set: connectedServices,
         },
       },
       create: {
         ...teacher,
-        courses: {
-          connect: connectedCourses,
+        services: {
+          connect: connectedServices,
         },
       },
     });
@@ -201,7 +391,7 @@ async function seedPosts(): Promise<void> {
       title: 'Открыта запись на новый учебный год',
       excerpt: 'Приглашаем детей на развивающие и творческие занятия.',
       content:
-        'Мы открыли запись в группы раннего развития, подготовки к школе и творческой мастерской. Познакомиться с педагогами и подобрать подходящее направление можно на пробном занятии.',
+        'Мы открыли запись в группы раннего развития, подготовки к школе и творческой мастерской. Познакомиться с педагогами и подобрать подходящую услугу можно на пробном занятии.',
       coverUrl: '/images/demo/posts/zapis-na-uchebnyy-god.jpg',
       isPublished: true,
       publishedAt: new Date('2026-08-01T09:00:00.000Z'),
@@ -220,11 +410,15 @@ async function seedPosts(): Promise<void> {
         {
           url: '/images/demo/gallery/den-otkrytyh-dverey-1.jpg',
           alt: 'Дети рисуют на творческом мастер-классе',
+          caption: 'Творческий мастер-класс на дне открытых дверей',
+          isPublished: true,
           sortOrder: 10,
         },
         {
           url: '/images/demo/gallery/den-otkrytyh-dverey-2.jpg',
           alt: 'Педагог проводит развивающее занятие',
+          caption: 'Знакомство с развивающими занятиями',
+          isPublished: true,
           sortOrder: 20,
         },
       ],
@@ -257,8 +451,8 @@ async function main(): Promise<void> {
   console.log('Запуск seed...');
 
   await seedAdmin();
-  const courseIds = await seedCourses();
-  await seedTeachers(courseIds);
+  const serviceIds = await seedServices();
+  await seedTeachers(serviceIds);
   await seedPosts();
 
   console.log('Seed завершён успешно');

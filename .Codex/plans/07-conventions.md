@@ -10,27 +10,27 @@
 
 | Файл | Шаблон | Пример |
 |---|---|---|
-| Модуль | `<имя>.module.ts` | `courses.module.ts` |
-| Сервис | `<имя>.service.ts` | `courses.service.ts` |
-| Контроллер | `<имя>.controller.ts` | `courses.controller.ts` |
-| DTO | `<действие>-<сущность>.dto.ts` | `create-course.dto.ts` |
+| Модуль | `<имя>.module.ts` | `services.module.ts` |
+| Сервис | `<имя>.service.ts` | `services.service.ts` |
+| Контроллер | `<имя>.controller.ts` | `services.controller.ts` |
+| DTO | `<действие>-<сущность>.dto.ts` | `create-service.dto.ts` |
 | Guard | `<имя>.guard.ts` | `jwt-auth.guard.ts` |
 | Стратегия | `<имя>.strategy.ts` | `jwt.strategy.ts` |
 | Декоратор | `<имя>.decorator.ts` | `current-user.decorator.ts` |
 
-Имена папок модулей — **множественное число, kebab-case**: `courses/`, `gallery-items/`.
-Имена классов — **PascalCase**: `CoursesService`, `CreateCourseDto`.
+Имена папок модулей — **множественное число, kebab-case**: `services/`, `gallery-items/`.
+Имена классов — **PascalCase**: `ServicesService`, `CreateServiceDto`.
 
 ### Анатомия доменного модуля
 
 ```
-courses/
-├── courses.module.ts
-├── courses.service.ts        # вся работа с Prisma и бизнес-логика
-├── courses.controller.ts     # только HTTP: маршруты, коды, делегирование в сервис
+services/
+├── services.module.ts
+├── services.service.ts        # вся работа с Prisma и бизнес-логика
+├── services.controller.ts     # только HTTP: маршруты, коды, делегирование в сервис
 └── dto/
-    ├── create-course.dto.ts
-    └── update-course.dto.ts  # extends PartialType(CreateCourseDto)
+    ├── create-service.dto.ts
+    └── update-service.dto.ts  # extends PartialType(CreateServiceDto)
 ```
 
 **Разделение обязанностей:**
@@ -67,6 +67,8 @@ src/common/
 - `ListXxxDto extends PaginationQueryDto` — свои поля только фильтры. Значения
   по умолчанию (`page=1`, `pageSize=20`) и потолок `Max(100)` описаны один раз
   в общем предке.
+- Массив `daysOfWeek` в DTO расписания проверяется на уникальность и нормализуется
+  в ISO-порядок `MONDAY`–`SUNDAY`. Повтор вроде `[MONDAY, MONDAY]` недопустим.
 - **DTO в контроллере импортируются обычным `import`, не `import type`.**
   `emitDecoratorMetadata` кладёт ссылку на класс в `design:paramtypes`, оттуда её
   читает `ValidationPipe`. Стёртый импорт оставит в метаданных `Object`, и валидация
@@ -138,7 +140,7 @@ return serialize(user); // Date → строка на любой глубине,
 ```json
 {
   "statusCode": 404,
-  "message": "Course not found",
+  "message": "Service not found",
   "error": "Not Found"
 }
 ```
@@ -174,8 +176,8 @@ return serialize(user); // Date → строка на любой глубине,
 
 | Роут | Доступ |
 |---|---|
-| `GET /api/courses`, `GET /api/courses/:slug` | `@Public()` — витрина сайта |
-| `POST/PATCH/DELETE /api/courses` | `@Roles(ADMIN)` |
+| `GET /api/services`, `GET /api/services/:slug` | `@Public()` — витрина сайта |
+| `POST/PATCH/DELETE /api/services` | `@Roles(ADMIN)` |
 | `POST /api/leads` | `@Public()` — форма заявки с сайта |
 | `GET/PATCH /api/leads` | `@Roles(ADMIN, MANAGER)` |
 
@@ -210,12 +212,12 @@ Prisma по умолчанию использует имена моделей и
 #### Анатомия слайса
 
 Слайс — папка внутри слоя, названная по домену (kebab-case, единственное число
-для сущностей): `entities/course/`, `features/submit-lead/`, `widgets/header/`.
+для сущностей): `entities/service/`, `features/submit-lead/`, `widgets/header/`.
 
 ```
-entities/course/
+entities/service/
 ├── ui/
-│   └── CourseCard.tsx
+│   └── ServiceCard.tsx
 ├── model/                  # типы, схемы, состояние — если оно вообще нужно
 ├── api/                    # запросы, относящиеся именно к курсам
 └── index.ts                # публичный API слайса
@@ -229,17 +231,17 @@ entities/course/
 Наружу слайс отдаёт только то, что реэкспортировал `index.ts`:
 
 ```ts
-// entities/course/index.ts
-export { CourseCard } from './ui/CourseCard';
-export type { Course } from './model/types';
+// entities/service/index.ts
+export { ServiceCard } from './ui/ServiceCard';
+export type { Service } from './model/types';
 ```
 
 ```ts
 // ✅ через публичный API
-import { CourseCard } from '@/entities/course';
+import { ServiceCard } from '@/entities/service';
 
 // ❌ во внутренности чужого слайса не лезем
-import { CourseCard } from '@/entities/course/ui/CourseCard';
+import { ServiceCard } from '@/entities/service/ui/ServiceCard';
 ```
 
 #### Правило импортов
@@ -322,13 +324,13 @@ import { CourseCard } from '@/entities/course/ui/CourseCard';
 Иерархические массивы, от общего к частному:
 
 ```ts
-['courses']                       // весь список
-['courses', { page: 1 }]          // страница списка
-['courses', slug]                 // конкретный курс
+['services']                       // весь список
+['services', { page: 1 }]          // страница списка
+['services', slug]                 // конкретная услуга
 ['leads', { status: 'NEW' }]      // отфильтрованный список
 ```
 
-Так `invalidateQueries({ queryKey: ['courses'] })` сбрасывает и список, и карточки.
+Так `invalidateQueries({ queryKey: ['services'] })` сбрасывает и список, и карточки.
 
 ### Импорты
 
@@ -360,7 +362,7 @@ import { CourseCard } from '@/entities/course/ui/CourseCard';
 На русском. Комментируем **почему**, а не **что** — «что» видно из кода.
 
 ```ts
-// ✅ SetNull, а не Cascade: заявка — история обращений, она должна пережить удаление курса
+// ✅ SetNull, а не Cascade: заявка — история обращений, она должна пережить удаление услуги
 // ❌ устанавливаем поведение при удалении
 ```
 

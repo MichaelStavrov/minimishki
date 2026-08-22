@@ -100,7 +100,7 @@ curl -i http://localhost:3001/api/users
 ### После этапа F — доменные роуты живы
 
 ```bash
-curl http://localhost:3001/api/courses
+curl http://localhost:3001/api/services
 curl http://localhost:3001/api/teachers
 curl http://localhost:3001/api/posts
 ```

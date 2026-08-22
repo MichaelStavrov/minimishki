@@ -1,7 +1,7 @@
 import type { LeadStatus } from '../enums';
-import type { CourseDto } from './course.dto';
+import type { ServiceDto } from './service.dto';
 
-/** Заявка на пробное занятие с формы на сайте */
+/** Заявка с публичной формы сайта */
 export interface LeadDto {
   id: string;
   /** Имя родителя */
@@ -14,8 +14,8 @@ export interface LeadDto {
   createdAt: string;
   updatedAt: string;
 
-  /** null — заявка без выбора направления либо направление удалили (onDelete: SetNull) */
-  courseId: string | null;
+  /** null — услуга не выбрана либо была физически удалена */
+  serviceId: string | null;
   /** Приходит только при запросе с `include`; внутри тоже может быть null */
-  course?: CourseDto | null;
+  service?: ServiceDto | null;
 }
