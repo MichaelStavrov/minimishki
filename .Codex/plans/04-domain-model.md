@@ -45,9 +45,12 @@ Service
 Полный состав моделей и полей подтверждён 22.08.2026, перенесён в
 `apps/api/prisma/schema.prisma` и проверен командой `prisma validate`. Миграция
 `20260822112243_services_v2` дополнена восемью `CHECK`-ограничениями, применена и
-проверена через `prisma migrate status` и системный каталог PostgreSQL. Общие enum
-и DTO обновлены, `CourseDto` удалён, shared-пакет собран. Demo-seed дважды проверен
-без дубликатов. Следующий шаг — CRUD `src/modules/services/`.
+проверена через `prisma migrate status` и системный каталог PostgreSQL. На шаге 20.2
+`Teacher` получил `archivedAt`; миграции `20260823032803_teacher_archiving` и
+`20260823045400_teacher_archived_publication_check` добавили поле, индекс и защиту
+инварианта архивной записи. Общие enum и DTO обновлены, `CourseDto` удалён,
+shared-пакет собран. Demo-seed проверен на идемпотентность и восстановление своих
+архивных педагогов.
 
 ### Редактируемое содержимое — очищенный HTML
 
@@ -173,6 +176,12 @@ ageNote: String | null
 - `Lead.serviceId` сохраняется при архивировании; для возможного физического
   удаления на уровне обслуживания БД остаётся `onDelete: SetNull`.
 
+`Teacher` использует тот же жизненный цикл: `DELETE /teachers/:id` архивирует и
+снимает публикацию, повторный DELETE идемпотентен, восстановление возвращает черновик,
+а связи с услугами сохраняются. PostgreSQL-ограничение
+`Teacher_archived_publication_check` не позволяет выставить `isPublished = true`,
+пока `archivedAt` не равен `null`, даже в обход HTTP API.
+
 `ServiceOfferGroup`, `ServiceOffer` и `ServiceSchedule` имеют собственный
 `isPublished`. Публичная вложенная запись видна только при публикации всей цепочки
 родителей и отсутствии архива у услуги.
@@ -260,7 +269,8 @@ ServiceSchedule
 
 Дополнительные изменения:
 
-- `Teacher.courses` заменяется на `Teacher.services`;
+- `Teacher.courses` заменяется на `Teacher.services`; на шаге 20.2 педагог также
+  получает `archivedAt` и индекс `[isPublished, archivedAt, sortOrder]`;
 - `Lead.courseId` и `Lead.course` заменяются на `serviceId` и `service`;
 - `GalleryItem` получает `serviceId`, `service`, `caption`, `isPublished` и
   `updatedAt`: подпись и публикация редактируются через админку, поэтому время

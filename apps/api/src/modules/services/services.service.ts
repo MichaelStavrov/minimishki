@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 
 import type { Paginated, ServiceDto } from '@minimishki/shared';
 
+import { normalizeNullableText } from '../../common/normalize-nullable-text';
 import { toDomainError } from '../../common/prisma-error';
 import { serialize } from '../../common/serialize';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
@@ -22,15 +23,6 @@ const SERVICE_ERROR_MESSAGES = {
   unique: 'Услуга с таким slug уже существует',
   notFound: 'Услуга или один из связанных педагогов не найдены',
 };
-
-function normalizeNullableText(value: string | null | undefined): string | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  const normalized = value.trim();
-  return normalized === '' ? null : normalized;
-}
 
 function sanitizeRequiredHtml(html: string): string {
   const sanitized = sanitizeServiceHtml(html);

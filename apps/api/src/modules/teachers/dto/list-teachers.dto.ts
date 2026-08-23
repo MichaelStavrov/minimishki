@@ -5,13 +5,13 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { parseBooleanQuery, trimQueryString } from '../../../common/query-transformers';
 
 /**
- * Query-параметры административного GET /api/services/admin.
+ * Query-параметры административного GET /api/teachers/admin.
  *
  * Пагинация наследуется из общего PaginationQueryDto:
  * page по умолчанию 1, pageSize — 20, максимум — 100.
  */
-export class ListServicesDto extends PaginationQueryDto {
-  /** Поиск без учёта регистра по названию или slug */
+export class ListTeachersDto extends PaginationQueryDto {
+  /** Поиск без учёта регистра по ФИО, должности или slug */
   @IsOptional()
   @Transform(({ value }) => trimQueryString(value))
   @IsString()
@@ -26,7 +26,7 @@ export class ListServicesDto extends PaginationQueryDto {
   isPublished?: boolean;
 
   /**
-   * По умолчанию архив скрыт. true добавляет архивные услуги к активным,
+   * По умолчанию архив скрыт. true добавляет архивных педагогов к активным,
    * а не переключает список исключительно на архив.
    */
   @IsOptional()

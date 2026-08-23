@@ -56,6 +56,7 @@ const TEACHER_SELECT = {
   bio: true,
   photoUrl: true,
   isPublished: true,
+  archivedAt: true,
   sortOrder: true,
   createdAt: true,
   updatedAt: true,
@@ -145,7 +146,10 @@ export const SERVICE_PUBLIC_DETAIL_SELECT = {
     orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
   },
   teachers: {
-    where: { isPublished: true },
+    where: {
+      isPublished: true,
+      archivedAt: null,
+    },
     select: TEACHER_SELECT,
     orderBy: [{ sortOrder: 'asc' }, { fullName: 'asc' }],
   },

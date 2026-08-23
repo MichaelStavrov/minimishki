@@ -9,6 +9,7 @@ export interface TeacherDto {
   bio: string | null;
   photoUrl: string | null;
   isPublished: boolean;
+  archivedAt: string | null;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
