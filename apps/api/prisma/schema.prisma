@@ -172,20 +172,21 @@ model ServiceSchedule {
 
 /// Педагог детского центра
 model Teacher {
-  id          String   @id @default(cuid())
-  slug        String   @unique
+  id          String    @id @default(cuid())
+  slug        String    @unique
   fullName    String
   position    String
   bio         String?
   photoUrl    String?
-  isPublished Boolean  @default(false)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isPublished Boolean   @default(false)
+  archivedAt  DateTime?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   services Service[]
 
-  @@index([isPublished, sortOrder])
+  @@index([isPublished, archivedAt, sortOrder])
 }
 
 /// Новость или анонс центра
