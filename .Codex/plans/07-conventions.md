@@ -180,6 +180,8 @@ return serialize(user); // Date → строка на любой глубине,
 | `POST/PATCH/DELETE /api/services` | `@Roles(ADMIN)` |
 | `POST /api/leads` | `@Public()` — форма заявки с сайта |
 | `GET/PATCH /api/leads` | `@Roles(ADMIN, MANAGER)` |
+| `GET /api/posts`, `GET /api/posts/:slug` | `@Public()` — лента и карточка публикации |
+| Административный CRUD `/api/posts` | `@Roles(ADMIN, MANAGER)` — управление контентом |
 
 ### Правила аутентификации
 

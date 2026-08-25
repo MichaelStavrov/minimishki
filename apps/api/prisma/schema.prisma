@@ -189,18 +189,24 @@ model Teacher {
   @@index([isPublished, archivedAt, sortOrder])
 }
 
-/// Новость или анонс центра
+/// Новость или анонс разового события
 model Post {
-  id          String    @id @default(cuid())
-  slug        String    @unique
-  title       String
-  excerpt     String?
-  content     String
-  coverUrl    String?
-  isPublished Boolean   @default(false)
-  publishedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  slug              String    @unique
+  title             String
+  excerpt           String?
+  contentHtml       String
+  coverUrl          String?
+  eventStartsAt     DateTime?
+  eventEndsAt       DateTime?
+  ageLabel          String?
+  priceLabel        String?
+  registrationLabel String?
+  registrationUrl   String?
+  isPublished       Boolean   @default(false)
+  publishedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   gallery GalleryItem[]
 
@@ -219,7 +225,7 @@ model GalleryItem {
   updatedAt   DateTime @updatedAt
 
   postId String?
-  post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post   Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   serviceId String?
   service   Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
