@@ -17,6 +17,9 @@ out/
 # Lock-файл — генерируется pnpm, форматировать нельзя
 pnpm-lock.yaml
 
+# Next.js — генерируемый файл типов, его формат задаёт фреймворк
+apps/web/next-env.d.ts
+
 # Prisma — SQL-миграции и сгенерированный клиент
 apps/api/prisma/migrations/
 apps/api/generated/
