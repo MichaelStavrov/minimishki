@@ -24,19 +24,66 @@
   --radius-xl: 1.75rem;
 }
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  color-scheme: light;
+
+  --background: var(--color-cream-50);
+  --foreground: var(--color-ink);
+  --card: var(--color-cream-50);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-cream-50);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-teal-600);
+  --primary-foreground: var(--color-cream-50);
+  --secondary: var(--color-honey-100);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-cream-100);
+  --muted-foreground: var(--color-teal-700);
+  --accent: var(--color-coral-100);
+  --accent-foreground: var(--color-ink);
+  --destructive: var(--color-coral-400);
+  --destructive-foreground: var(--color-ink);
+  --border: var(--color-cream-200);
+  --input: var(--color-cream-200);
+  --ring: var(--color-teal-600);
+}
+
 @layer base {
-  :root {
-    color-scheme: light;
+  * {
+    border-color: var(--color-border);
+    outline-color: color-mix(in oklab, var(--color-ring) 50%, transparent);
   }
 
   html {
-    background-color: var(--color-cream-50);
+    background-color: var(--color-background);
   }
 
   body {
     min-height: 100vh;
-    background-color: var(--color-cream-50);
-    color: var(--color-ink);
+    background-color: var(--color-background);
+    color: var(--color-foreground);
   }
 
   ::selection {

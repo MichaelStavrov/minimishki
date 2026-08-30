@@ -44,8 +44,29 @@ Next.js 16.3.3 и React 19.2.8. Алиас `@/*` указывает на `./src/
 именованную константу. Повторно зелёные Prettier, ESLint и typecheck; отдельный прогон
 PostCSS подтвердил реальную компиляцию `globals.css` через Tailwind (5021 байт CSS).
 
-**Текущая точка:** этап G, шаг 23 — shadcn/ui: `components.json`, `cn()` и первый
-компонент `Button` в `apps/web/src/shared/ui/`.
+**Шаг 23 — shadcn/ui — завершён.** Созданы `components.json` со стилем `new-york`,
+алиасами на FSD-слой `shared` и настройками Next.js App Router / Tailwind v4,
+`src/shared/lib/cn.ts` и первый примитив `src/shared/ui/button.tsx`. Генератор
+shadcn/ui не добавил прямые зависимости компонента, поэтому в `apps/web/package.json`
+явно добавлены актуальные `clsx@^2.1.1`, `tailwind-merge@^3.6.0` и
+`class-variance-authority@^0.7.1`; `radix-ui@^1.6.7` добавлен генератором.
+После `pnpm install` зелёные Prettier, typecheck web и ESLint. До шага 26 ESLint
+печатает ожидаемое служебное сообщение об отсутствии маршрутов `app/` или `pages/`.
+
+**Код-ревью полного дифа шага 23 проведено, два важных замечания исправлены.**
+Сгенерированный `Button` использовал семантические классы shadcn, для которых в теме
+не было токенов, поэтому `bg-primary`, `bg-background` и focus-стили не попадали в
+итоговый CSS. Фирменная палитра связана с семантическими переменными через
+`@theme inline`; отдельная компиляция PostCSS подтвердила наличие всех используемых
+классов. Контраст destructive-кнопки с белым текстом составлял только `3.46:1`;
+добавлен `destructive-foreground` на основе тёмного `ink`, итоговый контраст —
+`4.82:1`. Повторно зелёные Prettier, typecheck, ESLint, `git diff --check` и
+`pnpm install --frozen-lockfile`. `pnpm audit --prod` показывает только ранее
+зафиксированную в бэклоге GHSA-ggr8-5vv4-36mx через конфигурационный путь Prisma;
+новые frontend-зависимости уязвимостей не добавили.
+
+**Текущая точка:** этап G, шаг 24 — универсальный HTTP-транспорт в
+`apps/web/src/shared/api/`.
 
 ### Ход выполнения последних backend-шагов
 
@@ -478,10 +499,10 @@ turbo.json
 
 ### Этап G — frontend *(раскладка по FSD)* ← **следующий**
 
-- [ ] Шаг 21 — конфиги `apps/web` (Next.js 16), алиас `@/` → `src/`
-- [ ] 🔧 **КТ-4** — `pnpm install`
-- [ ] Шаг 22 — Tailwind v4 + `src/_app/styles/globals.css`
-- [ ] Шаг 23 — `components.json` (алиасы на `shared`) + `src/shared/lib/cn.ts`
+- [x] Шаг 21 — конфиги `apps/web` (Next.js 16), алиас `@/` → `src/` *(30.08.2026)*
+- [x] 🔧 **КТ-4** — `pnpm install` *(30.08.2026)*
+- [x] Шаг 22 — Tailwind v4 + `src/_app/styles/globals.css` *(30.08.2026)*
+- [x] Шаг 23 — `components.json` (алиасы на `shared`) + `src/shared/lib/cn.ts` *(30.08.2026)*
 - [ ] Шаг 24 — `src/shared/api/`
 - [ ] Шаг 25 — `src/_app/providers.tsx`
 - [ ] Шаг 26 — `app/layout.tsx`
