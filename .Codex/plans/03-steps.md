@@ -45,7 +45,8 @@
 - `build` — `dependsOn: ["^build"]`, outputs `.next/**`, `dist/**`
 - `dev` — `cache: false`, `persistent: true`
 - `lint`, `typecheck`
-- `globalEnv`: `DATABASE_URL`, `NEXT_PUBLIC_API_URL`, `JWT_SECRET`
+- `globalEnv`: `DATABASE_URL`, `JWT_SECRET`, `WEB_ORIGIN`, `API_URL`,
+  `NEXT_PUBLIC_API_URL`
 
 Объяснить: механика кеширования задач, что означает `^` в `dependsOn`,
 зачем `globalEnv` (изменение переменной инвалидирует кеш).
@@ -116,6 +117,10 @@ git check-attr text eol -- package.json   # ожидаем text: auto, eol: lf
 > `as const`-объекты, чтобы frontend не тянул Prisma в бандл.
 > Подробности — в [`04-domain-model.md`](./04-domain-model.md#соотношение-с-packagesshared).
 
+Типы технических ответов тоже считаются сетевым контрактом. Перед frontend-этапом
+в пакет добавляется `HealthDto`, чтобы `GET /api/health` не описывался отдельно
+в Nest и Next.js.
+
 ### 🔧 КТ-1. Первая установка зависимостей
 
 ```bash
@@ -152,7 +157,8 @@ docker compose ps
 Для `apps/api` и `apps/web`.
 
 Объяснить: разницу между серверными переменными и `NEXT_PUBLIC_*`,
-почему `.env` в `.gitignore`, а `.env.example` — нет.
+почему `.env` в `.gitignore`, а `.env.example` — нет. Для API предусматривается
+`WEB_ORIGIN`; для web — отдельные `API_URL` и `NEXT_PUBLIC_API_URL`.
 
 **После вставки** создать реальные файлы:
 ```bash
@@ -227,7 +233,7 @@ pnpm db:studio            # откроется Prisma Studio на localhost:5555
 
 - глобальный префикс `api`
 - `ValidationPipe({ whitelist: true, transform: true })`
-- CORS для `http://localhost:3000`
+- CORS для origin из валидированной переменной `WEB_ORIGIN`
 - порт из `ConfigService` (по умолчанию 3001)
 - `GET /api/health` живёт в **отдельном модуле** `src/health/`, а не в `app.controller.ts`
 
@@ -320,6 +326,25 @@ pnpm db:seed
 **Проверить после каждого:** `GET /api/<модуль>` возвращает `200` и пустой список
 (или демо-данные из seed).
 
+### Шаг 20.6. Интеграционный контракт frontend ↔ backend
+
+Перед началом `apps/web` закрыть интеграционные долги, выявленные после реализации API:
+
+- добавить `HealthDto` в `packages/shared/src/dto/health.dto.ts`, экспортировать его
+  поимённо и перевести `HealthService` / `HealthController` на общий тип;
+- добавить `WEB_ORIGIN` в `apps/api/.env.example`, zod-валидацию и конфигурацию Nest;
+  `main.ts` передаёт в `enableCors()` провалидированный origin вместо жёсткого
+  `http://localhost:3000`;
+- добавить серверный `API_URL` в `apps/web/.env.example` и локальный `.env.local`;
+- добавить `API_URL` и `WEB_ORIGIN` в `turbo.json#globalEnv`, потому что изменение
+  окружения должно инвалидировать соответствующий кеш сборки;
+- синхронизировать реальные `.env` локально и проверить успешный preflight с
+  `Origin: http://localhost:3000` и отказ для постороннего origin.
+
+`API_URL` — серверный runtime-адрес Nest для Server Components. `NEXT_PUBLIC_API_URL`
+— публичный адрес для браузера, встраиваемый во время `next build`. Локально они
+одинаковы, но это разные переменные с разным жизненным циклом.
+
 ---
 
 ## Этап G. Frontend
@@ -337,6 +362,8 @@ pnpm db:seed
 ### Шаг 21. Конфиги `apps/web`
 `package.json` (**Next.js 16**) + `tsconfig.json` + `next.config.ts` + `eslint.config.mjs`.
 
+В `package.json` обязательны workspace-зависимость
+`@minimishki/shared: "workspace:*"` и маркер `server-only` для серверного API-входа.
 В `tsconfig.json` алиас `@/*` → `./src/*`.
 
 > ⚠️ Папку `src/app/` **не создаём** — Next.js принял бы её за App Router.
@@ -370,6 +397,10 @@ Tailwind v4 настраивается **через CSS**, без `tailwind.conf
 ### Шаг 23. shadcn/ui
 `components.json` (стиль `new-york`) + `src/shared/lib/cn.ts` (`cn()` — clsx + tailwind-merge).
 
+Для Next.js и Tailwind v4 в `components.json` явно задаются `rsc: true`, `tsx: true`,
+`tailwind.config: ""`, путь `tailwind.css` к `src/_app/styles/globals.css` и
+`cssVariables: true`.
+
 Алиасы направлены в слой `shared`, иначе CLI разложит компоненты
 в `src/components/ui` мимо архитектуры:
 
@@ -393,13 +424,36 @@ cd apps/web && pnpm dlx shadcn@latest add button && cd ../..
 > `node ./node_modules/.bin/shadcn add button`.
 
 ### Шаг 24. API-клиент
-`src/shared/api/` — обёртка над `fetch`: базовый URL из `NEXT_PUBLIC_API_URL`,
-дженерик-возврат, обработка не-2xx. Плюс `index.ts` — публичный API сегмента.
-Используется и в Server Components, и в TanStack Query.
+`src/shared/api/` содержит только универсальный HTTP-транспорт, не бизнес-методы:
+
+- `apiRequest<T>()` принимает путь и `RequestInit`;
+- серверный вход использует `API_URL` и помечается `server-only`;
+- универсальный браузерный вход использует `NEXT_PUBLIC_API_URL`;
+- обе переменные проверяются с понятной ошибкой до первого запроса;
+- query-параметры собираются через `URLSearchParams` без ручной конкатенации;
+- успешный `204 No Content` возвращает `undefined` и не вызывает `response.json()`;
+- не-2xx JSON преобразуется в типизированный `ApiError` на базе `ApiErrorDto`;
+- массив `message` сохраняется, чтобы UI мог показать ошибки отдельных полей;
+- сетевые и не-JSON ошибки отличаются от HTTP-ошибок;
+- generic описывает ожидаемый контракт TypeScript, но не выдаётся за runtime-валидацию.
+
+Публичный API `shared/api/index.ts` экспортирует только браузеробезопасные части;
+серверный транспорт экспортируется через `index.server.ts`. Функции конкретных
+endpoint размещаются рядом с потребителем: в `_pages/<page>/api`,
+`entities/<entity>/api` или `features/<action>/api`.
 
 ### Шаг 25. Провайдеры
-`src/_app/providers.tsx` — `'use client'`, `QueryClient` создаётся в `useState`,
-чтобы не шарился между запросами.
+`src/_app/providers.tsx` — `'use client'`, но `QueryClient` **не** создаётся через
+`useState`. Используется `makeQueryClient()` и `getQueryClient()`:
+
+- на сервере — новый экземпляр для каждого запроса;
+- в браузере — один сохранённый экземпляр, который не теряется при Suspense;
+- для SSR задаётся ненулевой `staleTime`, чтобы гидратированный запрос не
+  перезапрашивался сразу после загрузки.
+
+На публичных RSC-страницах данные по умолчанию загружаются средствами Next.js.
+TanStack Query применяется там, где действительно нужен клиентский кеш:
+интерактивные списки и мутации админки.
 
 ### Шаг 26. Root layout
 `app/layout.tsx` — `lang="ru"`, метаданные (`title: "Минимишки — детский центр"`),
@@ -407,12 +461,22 @@ cd apps/web && pnpm dlx shadcn@latest add button && cd ../..
 
 ### Шаг 27. Главная страница
 Слайс `src/_pages/home/` — `ui/HomePage.tsx` запрашивает `GET /api/health`
-через Server Component и выводит статус, `index.ts` реэкспортирует компонент.
+через Server Component и выводит статус. Запрос выполняется серверным API-входом
+с `cache: 'no-store'`, потому что health — текущее состояние, а не контент для кеша.
+Тип ответа — общий `HealthDto` из `@minimishki/shared`.
+
+Недоступность Nest, PostgreSQL, ответ `503` и сетевая ошибка не роняют всю главную:
+диагностический блок показывает состояние «API недоступен». Для каркаса также
+создаются маршрутные `app/loading.tsx`, `app/error.tsx` и `app/not-found.tsx`;
+`error.tsx` является минимальной клиентской границей.
+
+`HomePage` — серверный модуль, поэтому экспортируется через `index.server.ts`,
+а не через общий `index.ts`.
 
 `app/page.tsx` остаётся тонким:
 
 ```tsx
-export { HomePage as default } from '@/_pages/home';
+export { HomePage as default } from '@/_pages/home/index.server';
 ```
 
 Так сразу проверяется и связка web ↔ api, и что слои разложены верно.

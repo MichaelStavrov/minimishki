@@ -6,7 +6,10 @@ minimishki/
 │   ├── web/                          # Next.js 16 (порт 3000), архитектура — FSD
 │   │   ├── app/                      # ⚠️ роутинг Next.js — в КОРНЕ, не в src/
 │   │   │   ├── layout.tsx            # root layout: шрифты, метаданные, Providers
-│   │   │   └── page.tsx              # тонкий реэкспорт HomePage из src/_pages
+│   │   │   ├── page.tsx              # тонкий реэкспорт серверного HomePage
+│   │   │   ├── loading.tsx           # маршрутное состояние загрузки
+│   │   │   ├── error.tsx             # клиентская граница ошибок
+│   │   │   └── not-found.tsx         # общий 404
 │   │   ├── src/                      # ── слои FSD ──
 │   │   │   ├── _app/                 # инициализация приложения
 │   │   │   │   ├── providers.tsx     # QueryClientProvider ('use client')
@@ -15,12 +18,15 @@ minimishki/
 │   │   │   ├── _pages/               # сборка страниц из нижних слоёв
 │   │   │   │   └── home/
 │   │   │   │       ├── ui/HomePage.tsx
-│   │   │   │       └── index.ts      # публичный API слайса
+│   │   │   │       └── index.server.ts # серверный публичный API слайса
 │   │   │   ├── widgets/              # появится вместе с Header / Footer
 │   │   │   ├── features/             # по потребности
 │   │   │   ├── entities/             # по потребности
 │   │   │   └── shared/
-│   │   │       ├── api/              # типизированный fetch-клиент к NEXT_PUBLIC_API_URL
+│   │   │       ├── api/              # универсальный HTTP-транспорт
+│   │   │       │   ├── index.ts      # браузеробезопасный публичный API
+│   │   │       │   └── index.server.ts # вход с API_URL + server-only
+│   │   │       ├── config/           # проверка публичного окружения
 │   │   │       ├── lib/
 │   │   │       │   └── cn.ts         # clsx + tailwind-merge (нужен shadcn/ui)
 │   │   │       └── ui/               # сюда ставится shadcn/ui
@@ -140,9 +146,10 @@ minimishki/
 | `entities` | Бизнес-сущности и их представление | `service/`, `teacher/`, `lead/` |
 | `shared` | Переиспользуемое, не привязанное к домену | `ui/` (shadcn), `api/`, `lib/cn.ts` |
 
-Внутри слоя — **слайсы** (папки по домену), внутри слайса — **сегменты**
+Внутри бизнес-слоя — **слайсы** (папки по домену), внутри слайса — **сегменты**
 (`ui`, `model`, `api`, `lib`, `config`). Наружу слайс отдаёт только то,
-что реэкспортировал в своём `index.ts`.
+что реэкспортировал в своём `index.ts`; серверный код отделяется через
+`index.server.ts`. Слои `_app` и `shared` не делятся на бизнес-слайсы.
 
 **Почему `app/` вынесен из `src/`.** Next.js трактует `src/app` как App Router — положить
 туда одноимённый слой FSD нельзя, роутер сломается. Поэтому служебные папки Next
@@ -156,7 +163,7 @@ minimishki/
 
 ```tsx
 // app/services/page.tsx
-export { ServicesPage as default } from '@/_pages/services';
+export { ServicesPage as default } from '@/_pages/services/index.server';
 ```
 
 **Слои заводятся по мере надобности.** Обязателен только `shared`; пустых папок
@@ -164,8 +171,10 @@ export { ServicesPage as default } from '@/_pages/services';
 `widgets` появится вместе с Header и Footer, `entities` и `features` — когда
 у слайса возникнет второй потребитель.
 
-Правило импортов не только на словах: оно закрыто `import/no-restricted-paths`
-в `packages/eslint-config/next.js` и падает на `pnpm lint`.
+Направление зависимостей между слоями закрыто `import/no-restricted-paths`
+в `packages/eslint-config/next.js` и падает на `pnpm lint`. Изоляция соседних
+слайсов и импорт через публичный API остаются обязательными правилами ревью:
+текущая конфигурация ESLint их автоматически не доказывает.
 Подробности по раскладке кода — в [`07-conventions.md`](./07-conventions.md).
 
 ### Почему `auth/` и `users/` не лежат в `modules/`

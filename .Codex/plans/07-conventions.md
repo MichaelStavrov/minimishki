@@ -246,14 +246,20 @@ import { ServiceCard } from '@/entities/service';
 import { ServiceCard } from '@/entities/service/ui/ServiceCard';
 ```
 
+Если слайс содержит Server Component, чтение серверного env, приватные заголовки
+или импорт `server-only`, эти экспорты идут через `index.server.ts`. Обычный
+`index.ts` остаётся безопасным для клиентского графа импортов.
+
 #### Правило импортов
 
 Слой видит только слои **строго ниже** себя:
 `_app` → `_pages` → `widgets` → `features` → `entities` → `shared`.
 
-Импорт «вверх» или «вбок» (между слайсами одного слоя) запрещён и ловится
-`import/no-restricted-paths` на `pnpm lint`. Если двум слайсам одного слоя нужен
-общий код — он опускается на слой ниже.
+Импорт «вверх» запрещён и ловится `import/no-restricted-paths` на `pnpm lint`.
+Импорт «вбок» между слайсами одного слоя и обход чужого публичного API также
+запрещены, но текущая конфигурация ESLint их полностью не проверяет — это отдельный
+пункт код-ревью. Если двум слайсам одного слоя нужен общий код, он опускается
+на слой ниже.
 
 #### Куда что класть
 
@@ -261,7 +267,9 @@ import { ServiceCard } from '@/entities/service/ui/ServiceCard';
 |---|---|
 | Примитив shadcn/ui (Button, Input, Dialog) | `shared/ui/` |
 | `cn()`, форматирование дат, хелперы | `shared/lib/` |
-| fetch-клиент, общие типы ответов | `shared/api/` |
+| Универсальный HTTP-транспорт и `ApiError` | `shared/api/` |
+| Проверка глобальных env | `shared/config/` |
+| Запросы конкретной сущности | `entities/<сущность>/api/` либо ближайший потребитель |
 | Карточка курса, аватар педагога | `entities/<сущность>/ui/` |
 | Форма заявки, смена статуса заявки в админке | `features/<действие>/` |
 | Header, Footer, блок «Направления» на главной | `widgets/` |
@@ -320,6 +328,30 @@ import { ServiceCard } from '@/entities/service/ui/ServiceCard';
 | Публичные страницы (направления, педагоги, новости) | `fetch` в Server Component через `@/shared/api` |
 | Мутации из форм | Server Actions или `useMutation` |
 | Админка, интерактивные списки | TanStack Query |
+
+`shared/api` не знает о бизнес-маршрутах. Он отвечает за URL, сериализацию query,
+`RequestInit`, пустой `204`, разбор `ApiErrorDto` и различение HTTP/сетевых ошибок.
+Функции `getServices`, `createLead` и подобные живут рядом с доменным потребителем.
+
+Server Components используют серверный вход `index.server.ts` с `API_URL`.
+Клиентский код использует обычный `index.ts` с `NEXT_PUBLIC_API_URL`. Серверная
+переменная читается во время работы Next.js; публичная встраивается в бандл на сборке.
+Для каждого серверного запроса явно выбирается политика кеша. Health использует
+`cache: 'no-store'`; контент позже получает осмысленные `revalidate`/tags.
+
+Успешный `204 No Content` не парсится как JSON. Не-2xx превращается в типизированный
+`ApiError`, сохраняющий `statusCode`, `error` и `message: string | string[]`.
+Generic `apiRequest<T>` проверяется только TypeScript и не считается runtime-схемой.
+
+### TanStack Query
+
+`QueryClient` создаётся фабрикой: на сервере новый экземпляр на запрос, в браузере
+один сохранённый экземпляр. `useState(() => new QueryClient())` в корневом provider
+не используем: клиент может быть отброшен при первоначальном Suspense. Для SSR
+задаётся ненулевой `staleTime`.
+
+Публичные RSC-страницы не переносятся в TanStack Query без причины. Он нужен для
+интерактивных списков, фонового обновления, клиентских мутаций и админки.
 
 ### Ключи TanStack Query
 
