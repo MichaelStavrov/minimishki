@@ -10,8 +10,9 @@ export { ROLE, LEAD_STATUS, PRICE_TYPE, SCHEDULE_TYPE, DAY_OF_WEEK, AGE_MODE } f
 
 export type { Role, LeadStatus, PriceType, ScheduleType, DayOfWeek, AgeMode } from './enums';
 
-// Служебные обёртки ответов API
+// Служебные обёртки и ответы API
 export type { Paginated, ApiErrorDto } from './dto/common.dto';
+export type { HealthDto } from './dto/health.dto';
 
 // Аутентификация
 export type { LoginResponseDto } from './dto/auth.dto';

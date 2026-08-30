@@ -19,8 +19,9 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  // Фронтенд Next.js работает на 3000 — браузер иначе заблокирует запросы к API.
-  app.enableCors({ origin: 'http://localhost:3000' });
+  // Браузер разрешит кросс-доменный запрос только с настроенного frontend-origin.
+  const corsOrigin = config.get('cors.origin', { infer: true });
+  app.enableCors({ origin: [corsOrigin] });
 
   // Без этого onModuleDestroy не вызовется при Ctrl+C и SIGTERM.
   app.enableShutdownHooks();
