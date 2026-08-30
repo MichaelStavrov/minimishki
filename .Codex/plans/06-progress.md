@@ -87,11 +87,24 @@ shadcn/ui не добавил прямые зависимости компоне
 в `ApiNetworkError`. После исправления повторно зелёные форматирование, ESLint,
 typecheck и `git diff --check`.
 
-**Текущая точка:** шаг 24 закоммичен как
-`feat(web): добавить универсальный HTTP-транспорт` и влит в `main` через PR #25.
-На момент завершения сессии `main` совпадает с `origin/main`, рабочее дерево чистое.
-Точное первое действие следующей сессии: создать новую ветку от `main` (имя согласовать
-с пользователем), затем начать шаг 25 — `src/_app/providers.tsx` с фабрикой QueryClient.
+**Шаг 25 — провайдеры TanStack Query — завершён.** В
+`apps/web/src/_app/providers.tsx` создан клиентский `Providers` с `QueryClientProvider`.
+Фабрика `makeQueryClient()` создаёт отдельный экземпляр на сервере, а в браузере
+`getQueryClient()` сохраняет единый экземпляр вне React-состояния, поэтому он не теряется
+при первоначальном Suspense. Для гидратированных запросов задан `staleTime` в одну минуту.
+Добавлена и установлена `@tanstack/react-query@^5.102.8`. Устаревший экспорт `isServer`
+не используется: серверная среда определяется через `typeof window === 'undefined'`.
+Подтверждены зелёные `pnpm format:check`, `pnpm --filter web lint` и
+`pnpm --filter web typecheck`.
+
+**Код-ревью полного дифа шага 25 проведено — замечаний нет.** Повторно зелёные
+`pnpm format:check`, `pnpm --filter web lint`, `pnpm --filter web typecheck`,
+`pnpm install --frozen-lockfile` и `git diff --check`. Сообщение ESLint об отсутствии
+`pages` или `app` ожидаемо до создания App Router на шаге 26.
+
+**Текущая точка:** работа ведётся в ветке `feat/web-providers`. Шаг 25 готов к
+коммиту. Следующий плановый шаг после коммита — 26: root layout
+`apps/web/app/layout.tsx`.
 
 ### Ход выполнения последних backend-шагов
 
@@ -529,7 +542,7 @@ turbo.json
 - [x] Шаг 22 — Tailwind v4 + `src/_app/styles/globals.css` *(30.08.2026)*
 - [x] Шаг 23 — `components.json` (алиасы на `shared`) + `src/shared/lib/cn.ts` *(30.08.2026)*
 - [x] Шаг 24 — `src/shared/api/` *(30.08.2026)*
-- [ ] Шаг 25 — `src/_app/providers.tsx`
+- [x] Шаг 25 — `src/_app/providers.tsx` *(30.08.2026)*
 - [ ] Шаг 26 — `app/layout.tsx`
 - [ ] Шаг 27 — слайс `src/_pages/home/` + тонкий `app/page.tsx`
 
