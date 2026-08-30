@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-cream-50: #fff8f0;
+  --color-cream-100: #f7eadb;
+  --color-cream-200: #e9d8c3;
+
+  --color-teal-50: #eaf5f4;
+  --color-teal-100: #cde4e2;
+  --color-teal-600: #1f5c63;
+  --color-teal-700: #17464c;
+
+  --color-coral-100: #fbded6;
+  --color-coral-400: #e85d3f;
+
+  --color-honey-100: #fcedc8;
+  --color-honey-400: #f3bd46;
+
+  --color-ink: #261b1e;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    background-color: var(--color-cream-50);
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: var(--color-cream-50);
+    color: var(--color-ink);
+  }
+
+  ::selection {
+    background-color: var(--color-honey-400);
+    color: var(--color-ink);
+  }
+}
