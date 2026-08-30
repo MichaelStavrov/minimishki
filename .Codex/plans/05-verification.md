@@ -107,6 +107,35 @@ curl http://localhost:3001/api/posts
 
 **Ожидаем:** `200` и список (пустой или с данными из seed).
 
+### После шага 20.6 — контракт frontend ↔ backend синхронизирован
+
+Проверить CORS-preflight разрешённого origin:
+
+```bash
+curl -i -X OPTIONS http://localhost:3001/api/leads \
+  -H 'Origin: http://localhost:3000' \
+  -H 'Access-Control-Request-Method: POST'
+```
+
+**Ожидаем:** ответ содержит `Access-Control-Allow-Origin: http://localhost:3000`.
+Повтор с `Origin: http://evil.example` не должен возвращать разрешающий заголовок.
+
+Typecheck `shared` и API подтверждает, что `HealthDto` экспортируется общим пакетом
+и используется health-модулем без локальной копии интерфейса.
+
+### После этапа G — frontend связан с API
+
+- `http://localhost:3000` открывается при работающем API и показывает `status: ok`;
+- при остановленном API либо PostgreSQL главная остаётся доступной и показывает
+  «API недоступен», а не общий белый экран;
+- в клиентском бандле нет `API_URL`; браузер использует только
+  `NEXT_PUBLIC_API_URL`;
+- `app/error.tsx`, `app/loading.tsx` и `app/not-found.tsx` существуют;
+- server-only API-вход нельзя импортировать в Client Component — сборка должна
+  отклонить такой импорт;
+- тестовый разбор подтверждает строковый и массивный `ApiErrorDto`, сетевую ошибку
+  и успешный `204 No Content` без попытки JSON-парсинга.
+
 ---
 
 ## Финальная сквозная проверка (шаг 29)
@@ -228,6 +257,9 @@ pnpm build
 - [ ] `prisma validate` проходит, миграция создана, таблицы в БД есть
 - [ ] Seed отработал, администратор в БД, повторный запуск seed не падает
 - [ ] `http://localhost:3000` открывается, главная рендерится и показывает статус API
+- [ ] При недоступном API главная показывает диагностическое состояние, а не падает
+- [ ] Разрешённый `WEB_ORIGIN` получает CORS-заголовок, посторонний — нет
+- [ ] `HealthDto` общий для Nest и Next.js; локальной копии интерфейса нет
 - [ ] `GET /api/health` → 200
 - [ ] `GET /api/users` без токена → 401
 - [ ] `POST /api/auth/login` возвращает JWT
@@ -259,5 +291,5 @@ pnpm build
 | `PrismaClientInitializationError: Can't reach database` | контейнер ещё не `healthy`, либо `DATABASE_URL` указывает не на 5432, либо `.env` не создан из `.env.example` |
 | Порт 5432 занят | локально уже установлен PostgreSQL — сменить порт в `docker-compose.yml` (например `5433:5432`) и в `DATABASE_URL` |
 | Порт 3000 или 3001 занят | `netstat -ano \| grep :3000`, затем `taskkill //PID <pid> //F` (двойной слеш — защита от MSYS-преобразования) |
-| CORS-ошибка в браузере | в `main.ts` проверить, что разрешён origin `http://localhost:3000` |
-| Next.js не видит переменную окружения | для web файл должен называться **`.env.local`**, а не `.env`; переменная должна начинаться с `NEXT_PUBLIC_`; после изменения — перезапустить dev-сервер |
+| CORS-ошибка в браузере | проверить `WEB_ORIGIN` в `apps/api/.env` и перезапустить API; путь `/api` в origin не добавляется |
+| Next.js не видит переменную окружения | для web файл должен называться **`.env.local`**, а не `.env`; серверный код читает `API_URL`, клиентский — только `NEXT_PUBLIC_API_URL`; после изменения перезапустить dev-сервер |

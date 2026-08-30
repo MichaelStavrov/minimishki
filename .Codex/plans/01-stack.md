@@ -130,6 +130,7 @@ JWT_SECRET="<сгенерировать>"
 JWT_EXPIRES_IN="30d"
 PORT=3001
 NODE_ENV=development
+WEB_ORIGIN=http://localhost:3000
 ```
 
 Сгенерировать секрет:
@@ -141,10 +142,15 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### `apps/web/.env.local`
 
 ```ini
+API_URL=http://localhost:3001/api
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```
 
 > **Разница между переменными.** Всё, что **не** начинается с `NEXT_PUBLIC_`, доступно
 > только на сервере. Переменные с префиксом `NEXT_PUBLIC_` Next.js **встраивает в бандл
 > на этапе сборки** — их видно в исходниках страницы в браузере, поэтому секреты
-> туда класть нельзя. `NEXT_PUBLIC_API_URL` — адрес публичного API, это не секрет.
+> туда класть нельзя. `NEXT_PUBLIC_API_URL` — адрес публичного API, это не секрет,
+> но после `next build` его значение заморожено в клиентском бандле. `API_URL`
+> читается только Server Components во время работы сервера и может указывать на
+> внутренний адрес Nest. Локально обе переменные одинаковы. `WEB_ORIGIN` сообщает
+> Nest, какому браузерному origin разрешены CORS-запросы; это origin без пути `/api`.
