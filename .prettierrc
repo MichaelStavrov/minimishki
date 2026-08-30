@@ -11,6 +11,8 @@
   "bracketSameLine": false,
   "arrowParens": "always",
   "endOfLine": "lf",
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "tailwindStylesheet": "./apps/web/src/_app/styles/globals.css",
   "overrides": [
     {
       "files": "*.md",
