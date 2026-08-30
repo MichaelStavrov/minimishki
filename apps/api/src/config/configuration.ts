@@ -21,6 +21,9 @@ export const configuration = () => {
       secret: env.JWT_SECRET,
       expiresIn: env.JWT_EXPIRES_IN,
     },
+    cors: {
+      origin: env.WEB_ORIGIN,
+    },
   };
 };
 

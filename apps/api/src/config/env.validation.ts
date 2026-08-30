@@ -4,6 +4,20 @@ import { z } from 'zod';
 type JwtExpiresIn = `${number}${'s' | 'm' | 'h' | 'd'}`;
 
 /**
+ * Проверяет, что значение является чистым origin:
+ * протокол + хост + необязательный порт, без остальных частей URL.
+ */
+function isHttpOrigin(value: string): boolean {
+  try {
+    const url = new URL(value);
+
+    return /^https?:\/\/[^/?#\\]+$/i.test(value) && url.username === '' && url.password === '';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Схема переменных окружения apps/api.
  * Каждое поле здесь обязано иметь пару в apps/api/.env.example.
  */
@@ -31,6 +45,17 @@ const envSchema = z.object({
       'JWT_EXPIRES_IN: положительное число и единица времени — 60s, 15m, 12h, 30d',
     )
     .default('30d'),
+
+  // Origin разрешённого frontend-приложения для CORS.
+  WEB_ORIGIN: z
+    .url({
+      protocol: /^https?$/,
+      error: 'WEB_ORIGIN: ожидается HTTP(S)-адрес, например http://localhost:3000',
+    })
+    .refine(
+      isHttpOrigin,
+      'WEB_ORIGIN: укажите только origin без пути, завершающего слеша, query, hash и данных доступа',
+    ),
 
   // Порт HTTP-сервера. Из process.env приходит строкой, coerce приводит к числу.
   PORT: z.coerce

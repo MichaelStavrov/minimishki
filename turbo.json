@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": ["DATABASE_URL", "NEXT_PUBLIC_API_URL", "JWT_SECRET"],
+  "globalEnv": ["DATABASE_URL", "API_URL", "NEXT_PUBLIC_API_URL", "JWT_SECRET", "WEB_ORIGIN"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

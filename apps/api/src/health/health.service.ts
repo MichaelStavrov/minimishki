@@ -1,13 +1,8 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service';
+import type { HealthDto } from '@minimishki/shared';
 
-export interface HealthResponse {
-  status: 'ok';
-  database: 'up';
-  uptime: number;
-  timestamp: string;
-}
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class HealthService {
@@ -17,7 +12,7 @@ export class HealthService {
    * Состояние приложения. Бросает ServiceUnavailableException,
    * если база не отвечает — Nest превратит его в 503.
    */
-  async check(): Promise<HealthResponse> {
+  async check(): Promise<HealthDto> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch {
