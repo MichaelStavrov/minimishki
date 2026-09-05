@@ -4,7 +4,7 @@ export async function HomePage() {
   const health = await loadHealth();
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center px-6 py-16">
+    <main className="mx-auto flex w-full max-w-3xl flex-col justify-center px-6 py-16">
       <h1 className="text-4xl font-extrabold text-teal-700 sm:text-5xl">Минимишки</h1>
       <p className="mt-3 text-lg text-teal-700">Детский центр</p>
 
