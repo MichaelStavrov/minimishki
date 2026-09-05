@@ -24,6 +24,9 @@ out/
 node_modules/.prisma/
 apps/api/generated/
 
+# Next.js — автогенерируемые типы
+apps/web/next-env.d.ts
+
 # Логи
 *.log
 npm-debug.log*
