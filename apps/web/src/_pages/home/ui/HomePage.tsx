@@ -61,13 +61,9 @@ export async function HomePage() {
               «Минимишки» — место для игры, творчества, новых друзей и тёплых семейных воспоминаний.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8">
               <Button asChild size="lg">
                 <Link href="#services">Выбрать занятие</Link>
-              </Button>
-
-              <Button asChild variant="outline" size="lg">
-                <Link href="/contacts">Узнать о центре</Link>
               </Button>
             </div>
 
