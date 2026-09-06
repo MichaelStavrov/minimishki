@@ -3,6 +3,7 @@ import type { ServiceDto, TeacherDto } from '@minimishki/shared';
 
 import { LeadForm } from '@/features/submit-lead';
 
+import { contacts } from '@/shared/config/contacts';
 import {
   Button,
   Card,
@@ -260,9 +261,11 @@ export async function HomePage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <address className="rounded-2xl bg-teal-700 p-6 text-cream-50 not-italic shadow-lifted">
               <p className="text-sm font-black tracking-[0.12em] text-honey-400 uppercase">Адрес</p>
-              <p className="mt-4 text-lg font-extrabold">МО, г. Пушкино</p>
-              <p className="mt-1 leading-6 text-cream-100">Московский просп., дом 59</p>
-              <p className="leading-6 text-cream-100">ТЦ «Круиз», 3 этаж</p>
+              <div className="mt-4 text-lg font-extrabold">
+                {contacts.addressLines.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
+              </div>
             </address>
 
             <div className="rounded-2xl bg-honey-100 p-6 text-teal-700">
@@ -270,16 +273,16 @@ export async function HomePage() {
                 На связи
               </p>
               <a
-                href="tel:+79999288148"
-                className="mt-4 inline-flex text-xl font-black tracking-tight underline decoration-coral-400 decoration-2 underline-offset-4"
+                href={contacts.phone.href}
+                className="mt-4 inline-flex text-xl font-black tracking-tight underline decoration-coral-400 decoration-2 underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600/45"
               >
-                +7 (999) 928-81-48
+                {contacts.phone.display}
               </a>
-              <p className="mt-3 text-sm leading-6">
-                Ежедневно с 11:00 до 20:00
-                <br />
-                Аренда зала — до 21:00
-              </p>
+              <div className="mt-3 text-sm leading-6">
+                {contacts.workingHours.map((hours) => (
+                  <p key={hours}>{hours}</p>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -303,12 +306,12 @@ export async function HomePage() {
                 Можно и по телефону
               </p>
               <a
-                href="tel:+79999288148"
-                className="mt-3 inline-flex text-2xl font-black tracking-tight underline decoration-honey-400 decoration-2 underline-offset-4"
+                href={contacts.phone.href}
+                className="mt-3 inline-flex text-2xl font-black tracking-tight underline decoration-honey-400 decoration-2 underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-honey-400/70"
               >
-                +7 (999) 928-81-48
+                {contacts.phone.display}
               </a>
-              <p className="mt-3 text-sm leading-6 text-cream-100">Ежедневно с 11:00 до 20:00</p>
+              <p className="mt-3 text-sm leading-6 text-cream-100">{contacts.workingHours[0]}</p>
             </div>
           </div>
 

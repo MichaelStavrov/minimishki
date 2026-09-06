@@ -1,9 +1,8 @@
 import Link from 'next/link';
 
+import { contacts } from '@/shared/config/contacts';
 import { publicNavigation } from '@/shared/config/navigation';
 import { BrandMark } from '@/shared/ui';
-
-const phoneHref = 'tel:+79999288148';
 
 export function Footer() {
   return (
@@ -24,10 +23,10 @@ export function Footer() {
           </p>
 
           <a
-            href={phoneHref}
-            className="mt-6 inline-flex rounded-full bg-cream-50 px-5 py-3 text-sm font-extrabold text-teal-700 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-soft"
+            href={contacts.phone.href}
+            className="mt-6 inline-flex rounded-full bg-cream-50 px-5 py-3 text-sm font-extrabold text-teal-700 transition-transform duration-200 outline-none hover:-translate-y-0.5 hover:shadow-soft focus-visible:ring-[3px] focus-visible:ring-honey-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700"
           >
-            +7 (999) 928-81-48
+            {contacts.phone.display}
           </a>
         </div>
 
@@ -52,16 +51,34 @@ export function Footer() {
           </h2>
 
           <p className="mt-4 text-sm leading-6 text-cream-100">
-            <span className="block">МО, г. Пушкино</span>
-            <span className="block">Московский просп., дом 59</span>
-            <span className="block">ТЦ «Круиз», 3 этаж</span>
+            {contacts.addressLines.map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
           </p>
 
           <p className="mt-4 text-sm leading-6 text-cream-100">
-            Ежедневно с 11:00 до 20:00
-            <br />
-            Аренда зала — до 21:00
+            {contacts.workingHours.map((hours) => (
+              <span key={hours} className="block">
+                {hours}
+              </span>
+            ))}
           </p>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            {contacts.socialLinks.map((socialLink) => (
+              <a
+                key={socialLink.href}
+                href={socialLink.href}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full text-sm font-bold text-cream-100 underline decoration-honey-400 decoration-2 underline-offset-4 transition-colors outline-none hover:text-honey-400 focus-visible:ring-[3px] focus-visible:ring-honey-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700"
+              >
+                {socialLink.label}
+              </a>
+            ))}
+          </div>
         </address>
       </div>
 
