@@ -13,28 +13,28 @@ datasource db {
 // ============================================================
 
 enum Role {
-  ADMIN   // полный доступ
+  ADMIN // полный доступ
   MANAGER // работа с заявками и контентом
-  USER    // обычный пользователь
+  USER // обычный пользователь
 }
 
 enum LeadStatus {
-  NEW         // новая заявка
+  NEW // новая заявка
   IN_PROGRESS // менеджер связался
-  CONFIRMED   // запись подтверждена
-  REJECTED    // отказ
+  CONFIRMED // запись подтверждена
+  REJECTED // отказ
 }
 
 enum PriceType {
-  FIXED      // фиксированная цена
-  FROM       // цена «от»
-  FREE       // бесплатно
-  INCLUDED   // входит в стоимость
+  FIXED // фиксированная цена
+  FROM // цена «от»
+  FREE // бесплатно
+  INCLUDED // входит в стоимость
   ON_REQUEST // рассчитывается индивидуально
 }
 
 enum ScheduleType {
-  RECURRING  // регулярное расписание
+  RECURRING // регулярное расписание
   ON_REQUEST // время определяется по согласованию
 }
 
@@ -50,8 +50,8 @@ enum DayOfWeek {
 
 enum AgeMode {
   INHERIT // использовать возраст услуги
-  CUSTOM  // использовать собственный диапазон
-  NONE    // возрастных ограничений нет
+  CUSTOM // использовать собственный диапазон
+  NONE // возрастных ограничений нет
 }
 
 // ============================================================
@@ -167,6 +167,48 @@ model ServiceSchedule {
 }
 
 // ============================================================
+// Праздничный каталог
+// ============================================================
+
+/// Раздел праздничного прайса: например, «Шоу» или «Мастер-классы»
+model PartyCategory {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?
+  isPublished Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items PartyItem[]
+
+  @@index([isPublished, sortOrder])
+}
+
+/// Отдельная позиция праздничного прайса
+model PartyItem {
+  id              String    @id @default(cuid())
+  categoryId      String
+  title           String
+  descriptionHtml String?
+  priceType       PriceType
+  amount          Int?
+  priceUnit       String?
+  priceNote       String?
+  durationMinutes Int?
+  ageLabel        String?
+  isPublished     Boolean   @default(false)
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  category PartyCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId, isPublished, sortOrder])
+}
+
+// ============================================================
 // Остальной контент сайта
 // ============================================================
 
@@ -225,7 +267,7 @@ model GalleryItem {
   updatedAt   DateTime @updatedAt
 
   postId String?
-  post   Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   serviceId String?
   service   Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)

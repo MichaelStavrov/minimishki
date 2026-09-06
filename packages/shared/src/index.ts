@@ -28,4 +28,5 @@ export type {
 export type { TeacherDto } from './dto/teacher.dto';
 export type { PostDto } from './dto/post.dto';
 export type { GalleryItemDto } from './dto/gallery.dto';
+export type { PartyCategoryDto, PartyItemDto } from './dto/party.dto';
 export type { LeadDto } from './dto/lead.dto';
