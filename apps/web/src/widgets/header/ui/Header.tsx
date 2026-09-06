@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { LeadLink } from '@/features/submit-lead';
+
 import { publicNavigation } from '@/shared/config/navigation';
 import { BrandMark, Button } from '@/shared/ui';
 
@@ -31,7 +33,7 @@ export function Header() {
 
         <div className="hidden sm:block">
           <Button asChild className="text-base">
-            <Link href="/#lead">Записаться</Link>
+            <LeadLink>Записаться</LeadLink>
           </Button>
         </div>
 

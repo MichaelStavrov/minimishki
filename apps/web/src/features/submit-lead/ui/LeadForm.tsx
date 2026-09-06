@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import type { ServiceDto } from '@minimishki/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IMaskInput } from 'react-imask';
@@ -46,6 +46,23 @@ const defaultValues: LeadFormValues = {
 
 export function LeadForm({ services }: LeadFormProps) {
   const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    if (window.location.hash !== '#lead') {
+      return;
+    }
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      document.getElementById('lead')?.scrollIntoView({
+        block: 'start',
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
   const {
     control,
     formState: { errors, isSubmitting },

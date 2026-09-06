@@ -3,6 +3,8 @@
 import { useRef } from 'react';
 import Link from 'next/link';
 
+import { LeadLink } from '@/features/submit-lead';
+
 import { publicNavigation } from '@/shared/config/navigation';
 import { Button } from '@/shared/ui';
 
@@ -39,11 +41,8 @@ export function MobileNavigation() {
             {item.label}
           </Link>
         ))}
-
         <Button asChild className="mt-2 w-full text-base">
-          <Link href="/#lead" onClick={closeMenu}>
-            Записаться
-          </Link>
+          <LeadLink onClick={closeMenu}>Записаться</LeadLink>
         </Button>
       </nav>
     </details>
