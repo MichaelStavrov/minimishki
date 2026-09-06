@@ -47,3 +47,4 @@ export type { GalleryItemDto } from './dto/gallery.dto';
 export type { PartyCategoryDto, PartyItemDto } from './dto/party.dto';
 export type { LeadDto } from './dto/lead.dto';
 export type { ReviewDto, ReviewAdminDto } from './dto/review.dto';
+export type { SearchResultDto, SearchResponseDto, SearchResultType } from './dto/search.dto';

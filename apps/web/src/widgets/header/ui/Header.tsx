@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { LeadLink } from '@/features/submit-lead';
+import { SearchForm } from '@/features/search';
 
 import { publicNavigation } from '@/shared/config/navigation';
 import { BrandMark, Button } from '@/shared/ui';
@@ -30,6 +31,10 @@ export function Header() {
             </Link>
           ))}
         </nav>
+
+        <div className="hidden xl:block">
+          <SearchForm className="w-70" />
+        </div>
 
         <div className="hidden sm:block">
           <Button asChild className="text-base">

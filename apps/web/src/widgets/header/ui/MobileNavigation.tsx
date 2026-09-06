@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import Link from 'next/link';
 
 import { LeadLink } from '@/features/submit-lead';
+import { SearchForm } from '@/features/search';
 
 import { publicNavigation } from '@/shared/config/navigation';
 import { Button } from '@/shared/ui';
@@ -31,6 +32,7 @@ export function MobileNavigation() {
         aria-label="Мобильная навигация"
         className="absolute top-14 right-0 flex w-[min(18rem,calc(100vw-2.5rem))] flex-col gap-1 rounded-2xl border border-cream-200 bg-cream-50 p-3 shadow-lifted"
       >
+        <SearchForm className="mb-2" />
         {publicNavigation.map((item) => (
           <Link
             key={item.href}

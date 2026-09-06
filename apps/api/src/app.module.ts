@@ -10,6 +10,7 @@ import { PartyCatalogModule } from './modules/party-catalog/party-catalog.module
 import { LeadsModule } from './modules/leads/leads.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { SearchModule } from './modules/search/search.module';
 import { ServicesModule } from './modules/services/services.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -31,6 +32,7 @@ import { UsersModule } from './users/users.module';
     LeadsModule,
     PostsModule,
     ReviewsModule,
+    SearchModule,
     GalleryItemsModule,
     PartyCatalogModule,
   ],
