@@ -9,6 +9,7 @@ import { GalleryItemsModule } from './modules/gallery-items/gallery-items.module
 import { PartyCatalogModule } from './modules/party-catalog/party-catalog.module';
 import { LeadsModule } from './modules/leads/leads.module';
 import { PostsModule } from './modules/posts/posts.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 import { ServicesModule } from './modules/services/services.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -29,6 +30,7 @@ import { UsersModule } from './users/users.module';
     TeachersModule,
     LeadsModule,
     PostsModule,
+    ReviewsModule,
     GalleryItemsModule,
     PartyCatalogModule,
   ],

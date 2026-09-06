@@ -14,6 +14,7 @@ import type {
   DayOfWeek as PrismaDayOfWeek,
   LeadStatus as PrismaLeadStatus,
   PriceType as PrismaPriceType,
+  ReviewStatus as PrismaReviewStatus,
   Role as PrismaRole,
   ScheduleType as PrismaScheduleType,
 } from '@prisma/client';
@@ -23,6 +24,7 @@ import type {
   DayOfWeek as SharedDayOfWeek,
   LeadStatus as SharedLeadStatus,
   PriceType as SharedPriceType,
+  ReviewStatus as SharedReviewStatus,
   Role as SharedRole,
   ScheduleType as SharedScheduleType,
 } from '@minimishki/shared';
@@ -51,6 +53,7 @@ type Assert<TCondition extends true> = TCondition;
 export type EnumParityCheck = [
   Assert<IsExact<PrismaRole, SharedRole>>,
   Assert<IsExact<PrismaLeadStatus, SharedLeadStatus>>,
+  Assert<IsExact<PrismaReviewStatus, SharedReviewStatus>>,
   Assert<IsExact<PrismaPriceType, SharedPriceType>>,
   Assert<IsExact<PrismaScheduleType, SharedScheduleType>>,
   Assert<IsExact<PrismaDayOfWeek, SharedDayOfWeek>>,

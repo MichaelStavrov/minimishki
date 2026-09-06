@@ -25,6 +25,12 @@ enum LeadStatus {
   REJECTED // отказ
 }
 
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
 enum PriceType {
   FIXED // фиксированная цена
   FROM // цена «от»
@@ -298,4 +304,21 @@ model Lead {
 
   @@index([status, createdAt])
   @@index([serviceId])
+}
+
+/// Отзыв посетителя. Email и технический отпечаток не попадают в публичный API.
+model Review {
+  id           String       @id @default(cuid())
+  name         String
+  email        String
+  rating       Int?
+  text         String
+  status       ReviewStatus @default(PENDING)
+  consentedAt  DateTime
+  sourceIpHash String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([status, createdAt])
+  @@index([sourceIpHash, createdAt])
 }

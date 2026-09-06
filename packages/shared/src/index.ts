@@ -6,9 +6,25 @@
  */
 
 // Перечисления: значения и одноимённые типы
-export { ROLE, LEAD_STATUS, PRICE_TYPE, SCHEDULE_TYPE, DAY_OF_WEEK, AGE_MODE } from './enums';
+export {
+  ROLE,
+  LEAD_STATUS,
+  REVIEW_STATUS,
+  PRICE_TYPE,
+  SCHEDULE_TYPE,
+  DAY_OF_WEEK,
+  AGE_MODE,
+} from './enums';
 
-export type { Role, LeadStatus, PriceType, ScheduleType, DayOfWeek, AgeMode } from './enums';
+export type {
+  Role,
+  LeadStatus,
+  ReviewStatus,
+  PriceType,
+  ScheduleType,
+  DayOfWeek,
+  AgeMode,
+} from './enums';
 
 // Служебные обёртки и ответы API
 export type { Paginated, ApiErrorDto } from './dto/common.dto';
@@ -30,3 +46,4 @@ export type { PostDto } from './dto/post.dto';
 export type { GalleryItemDto } from './dto/gallery.dto';
 export type { PartyCategoryDto, PartyItemDto } from './dto/party.dto';
 export type { LeadDto } from './dto/lead.dto';
+export type { ReviewDto, ReviewAdminDto } from './dto/review.dto';

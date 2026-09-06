@@ -34,6 +34,18 @@ export const LEAD_STATUS = {
 
 export type LeadStatus = (typeof LEAD_STATUS)[keyof typeof LEAD_STATUS];
 
+/** Стадия премодерации публичного отзыва */
+export const REVIEW_STATUS = {
+  /** Отзыв ожидает решения сотрудника */
+  PENDING: 'PENDING',
+  /** Отзыв доступен на сайте */
+  PUBLISHED: 'PUBLISHED',
+  /** Отзыв отклонён и не публикуется */
+  REJECTED: 'REJECTED',
+} as const;
+
+export type ReviewStatus = (typeof REVIEW_STATUS)[keyof typeof REVIEW_STATUS];
+
 /** Способ представления цены предложения */
 export const PRICE_TYPE = {
   /** Фиксированная цена */
