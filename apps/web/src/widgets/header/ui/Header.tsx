@@ -14,13 +14,7 @@ export function Header() {
           className="group inline-flex items-center gap-3 rounded-full"
           aria-label="Минимишки — на главную"
         >
-          <BrandMark className="bg-teal-600 text-cream-50 shadow-soft transition-transform duration-200 group-hover:scale-105 group-hover:-rotate-6" />
-          <span className="flex flex-col leading-none">
-            <span className="text-xl font-black tracking-tight text-teal-700">Минимишки</span>
-            <span className="mt-1 text-[0.65rem] font-extrabold tracking-[0.14em] text-coral-400 uppercase">
-              детский центр
-            </span>
-          </span>
+          <BrandMark priority className="transition-transform duration-200 group-hover:scale-105" />
         </Link>
 
         <nav aria-label="Основная навигация" className="hidden items-center gap-1 lg:flex">

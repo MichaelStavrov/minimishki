@@ -15,8 +15,7 @@ export function Footer() {
             className="inline-flex items-center gap-3 rounded-full"
             aria-label="Минимишки — на главную"
           >
-            <BrandMark className="bg-honey-400 text-ink" />
-            <span className="text-2xl font-black tracking-tight">Минимишки</span>
+            <BrandMark className="w-44" />
           </Link>
 
           <p className="mt-5 max-w-sm text-sm leading-6 text-cream-100">
