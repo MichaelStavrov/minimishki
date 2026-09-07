@@ -10,6 +10,10 @@ export interface LeadDto {
   childName: string | null;
   childAge: number | null;
   comment: string | null;
+  /** null у заявок, созданных до серверной фиксации согласия. */
+  consentedAt: string | null;
+  /** null у заявок, созданных до серверной фиксации согласия. */
+  consentVersion: string | null;
   status: LeadStatus;
   createdAt: string;
   updatedAt: string;

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -147,7 +148,16 @@ export function ReviewForm() {
             disabled={isSubmitting}
             {...register('consent')}
           />
-          <span>Согласен на обработку персональных данных для проверки и публикации отзыва.</span>
+          <span>
+            Согласен на обработку персональных данных для проверки и публикации отзыва согласно{' '}
+            <Link
+              className="font-bold underline decoration-coral-400 decoration-2 underline-offset-4"
+              href="/privacy"
+            >
+              Политике обработки данных
+            </Link>
+            .
+          </span>
         </label>
         {errors.consent?.message ? (
           <p className="mt-2 text-sm font-bold text-danger-600" role="alert">

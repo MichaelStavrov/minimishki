@@ -9,6 +9,7 @@ export type CreateLeadPayload = {
   childAge: number | null;
   comment: string | null;
   serviceId: string | null;
+  consent: true;
 };
 
 export async function createLead(payload: CreateLeadPayload): Promise<LeadDto> {

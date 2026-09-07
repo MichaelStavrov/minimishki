@@ -33,6 +33,9 @@ export type { HealthDto } from './dto/health.dto';
 // Аутентификация
 export type { LoginResponseDto } from './dto/auth.dto';
 
+// Юридические документы
+export { POLICY_VERSION } from './policy';
+
 // Сущности домена
 export type { UserDto } from './dto/user.dto';
 export type {

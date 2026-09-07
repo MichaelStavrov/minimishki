@@ -85,7 +85,15 @@ export function Footer() {
       <div className="border-t border-cream-50/15">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-5 py-5 text-xs font-semibold text-cream-100 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>© {new Date().getFullYear()} Детский центр «Минимишки»</p>
-          <p>ИП Ставров Михаил Николаевич · ИНН 503815758966</p>
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            <p>ИП Ставров Михаил Николаевич · ИНН 503815758966</p>
+            <Link
+              className="underline decoration-honey-400 decoration-2 underline-offset-4"
+              href="/privacy"
+            >
+              Политика обработки данных
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

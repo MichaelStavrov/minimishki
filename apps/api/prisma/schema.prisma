@@ -295,6 +295,9 @@ model Lead {
   childName String?
   childAge  Int?
   comment   String?
+  /// null у заявок, созданных до появления серверной фиксации согласия
+  consentedAt     DateTime?
+  consentVersion  String?
   status    LeadStatus @default(NEW)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt

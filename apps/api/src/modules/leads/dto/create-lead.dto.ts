@@ -1,4 +1,14 @@
-import { IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import {
+  Equals,
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 /** Тело публичного POST /api/leads */
 export class CreateLeadDto {
@@ -50,4 +60,9 @@ export class CreateLeadDto {
   @MaxLength(100, { message: 'serviceId не может быть длиннее 100 символов' })
   @Matches(/\S/, { message: 'serviceId не может состоять только из пробелов' })
   serviceId?: string | null;
+
+  /** Согласие проверяется на сервере, а не только в интерфейсе формы. */
+  @IsBoolean({ message: 'consent должен быть логическим значением' })
+  @Equals(true, { message: 'нужно согласие на обработку персональных данных' })
+  consent: boolean;
 }

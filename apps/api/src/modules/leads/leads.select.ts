@@ -10,6 +10,8 @@ export const LEAD_SELECT = {
   childName: true,
   childAge: true,
   comment: true,
+  consentedAt: true,
+  consentVersion: true,
   status: true,
   createdAt: true,
   updatedAt: true,

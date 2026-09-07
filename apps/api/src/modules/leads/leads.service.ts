@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
-import { LEAD_STATUS, type LeadDto, type Paginated } from '@minimishki/shared';
+import { LEAD_STATUS, POLICY_VERSION, type LeadDto, type Paginated } from '@minimishki/shared';
 
 import { normalizeNullableText } from '../../common/normalize-nullable-text';
 import { toDomainError } from '../../common/prisma-error';
@@ -46,6 +46,8 @@ export class LeadsService {
     const serviceId =
       dto.serviceId === null || dto.serviceId === undefined ? null : dto.serviceId.trim();
 
+    const consentedAt = new Date();
+
     try {
       const data: Prisma.LeadCreateInput = {
         name: dto.name.trim(),
@@ -53,6 +55,8 @@ export class LeadsService {
         childName: normalizeNullableText(dto.childName),
         childAge: dto.childAge ?? null,
         comment: normalizeNullableText(dto.comment),
+        consentedAt,
+        consentVersion: POLICY_VERSION,
         status: LEAD_STATUS.NEW,
         service:
           serviceId === null

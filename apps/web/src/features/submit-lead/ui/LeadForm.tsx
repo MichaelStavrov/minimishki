@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import type { ServiceDto } from '@minimishki/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -86,6 +87,7 @@ export function LeadForm({ services }: LeadFormProps) {
         childAge: values.childAge === '' ? null : Number(values.childAge),
         comment: toNullableText(values.comment),
         serviceId: toNullableText(values.serviceId),
+        consent: true,
       });
       setIsSuccess(true);
     } catch (error: unknown) {
@@ -229,7 +231,16 @@ export function LeadForm({ services }: LeadFormProps) {
             disabled={isSubmitting}
             {...register('consent')}
           />
-          <span>Согласен на обработку персональных данных для связи по заявке.</span>
+          <span>
+            Согласен на обработку персональных данных для связи по заявке согласно{' '}
+            <Link
+              className="font-bold underline decoration-coral-400 decoration-2 underline-offset-4"
+              href="/privacy"
+            >
+              Политике обработки данных
+            </Link>
+            .
+          </span>
         </label>
         {errors.consent?.message ? (
           <p className="mt-2 text-sm font-bold text-danger-600" role="alert">
