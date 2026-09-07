@@ -53,7 +53,7 @@ export function createApiRequest(apiUrl: string): ApiRequest {
 }
 
 function createApiUrl(apiUrl: string, path: string): URL {
-  const url = new URL(apiUrl);
+  const url = apiUrl.startsWith('/') ? new URL(apiUrl, window.location.origin) : new URL(apiUrl);
   const normalizedPath = path.replace(/^\/+/, '');
 
   url.pathname = `${url.pathname.replace(/\/+$/, '')}/${normalizedPath}`;
