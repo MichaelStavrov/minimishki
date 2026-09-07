@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { LeadDto, LeadStatus } from '@minimishki/shared';
+import type { AdminLeadDto, LeadStatus, LeadStatusChangeDto } from '@minimishki/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { LeadStatusControl } from '@/features/change-lead-status';
+import { LeadManagerCommentForm } from '@/features/update-lead-manager-comment';
 
 import {
   getAdminLead,
+  getAdminLeadStatusHistory,
   getAdminLeads,
   LeadStatusBadge,
   leadStatusLabels,
@@ -40,6 +42,7 @@ export function LeadsQueue() {
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [hasUnsavedManagerComment, setHasUnsavedManagerComment] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -68,6 +71,12 @@ export function LeadsQueue() {
     enabled: selectedLeadId !== null,
   });
 
+  const statusHistoryQuery = useQuery({
+    queryKey: ['leads', 'status-history', selectedLeadId],
+    queryFn: () => getAdminLeadStatusHistory(selectedLeadId as string),
+    enabled: selectedLeadId !== null,
+  });
+
   const totalPages = leadsQuery.data
     ? Math.max(1, Math.ceil(leadsQuery.data.total / PAGE_SIZE))
     : 1;
@@ -77,6 +86,23 @@ export function LeadsQueue() {
   function updateStatusFilter(value: LeadStatus | '') {
     setFilters((current) => ({ ...current, status: value }));
     setPage(1);
+  }
+
+  function openLead(id: string) {
+    setHasUnsavedManagerComment(false);
+    setSelectedLeadId(id);
+  }
+
+  function closeLeadDialog() {
+    if (
+      hasUnsavedManagerComment &&
+      !window.confirm('Комментарий сотрудника не сохранён. Закрыть заявку без сохранения?')
+    ) {
+      return;
+    }
+
+    setHasUnsavedManagerComment(false);
+    setSelectedLeadId(null);
   }
 
   return (
@@ -142,7 +168,7 @@ export function LeadsQueue() {
           </div>
           {leadsQuery.isLoading ? <LoadingRows /> : null}
           {leadsQuery.data?.items.map((lead) => (
-            <LeadRow key={lead.id} lead={lead} onOpen={() => setSelectedLeadId(lead.id)} />
+            <LeadRow key={lead.id} lead={lead} onOpen={() => openLead(lead.id)} />
           ))}
           {leadsQuery.data?.items.length === 0 ? <EmptyState /> : null}
         </div>
@@ -177,23 +203,36 @@ export function LeadsQueue() {
       <LeadDialog
         lead={selectedLeadQuery.data}
         error={selectedLeadQuery.error}
+        history={statusHistoryQuery.data}
+        historyError={statusHistoryQuery.error}
+        isHistoryLoading={statusHistoryQuery.isLoading}
         isLoading={selectedLeadQuery.isLoading}
-        onOpenChange={(open) => !open && setSelectedLeadId(null)}
+        onOpenChange={(open) => !open && closeLeadDialog()}
+        onManagerCommentDirtyChange={setHasUnsavedManagerComment}
         open={selectedLeadId !== null}
       />
     </section>
   );
 }
 
-function LeadRow({ lead, onOpen }: { lead: LeadDto; onOpen: () => void }) {
+function LeadRow({ lead, onOpen }: { lead: AdminLeadDto; onOpen: () => void }) {
   return (
-    <article className="grid gap-4 border-b border-cream-200 px-5 py-5 last:border-b-0 lg:grid-cols-[minmax(11rem,1.2fr)_minmax(9rem,1fr)_minmax(9rem,1fr)_9rem_10rem] lg:items-center lg:gap-4 lg:px-6">
-      <button className="min-w-0 text-left" type="button" onClick={onOpen}>
-        <p className="truncate font-black text-teal-700 underline-offset-4 hover:underline">
-          {lead.name}
-        </p>
+    <article
+      className="grid cursor-pointer gap-4 border-b border-cream-200 px-5 py-5 transition-colors last:border-b-0 hover:bg-teal-50 focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-teal-600 lg:grid-cols-[minmax(11rem,1.2fr)_minmax(9rem,1fr)_minmax(9rem,1fr)_9rem_10rem] lg:items-center lg:gap-4 lg:px-6"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+    >
+      <div className="min-w-0">
+        <p className="truncate font-black text-teal-700 underline-offset-4">{lead.name}</p>
         <p className="mt-1 text-sm text-muted-foreground">{formatPhone(lead.phone)}</p>
-      </button>
+      </div>
       <DetailCell
         label="Ребёнок"
         value={
@@ -204,11 +243,8 @@ function LeadRow({ lead, onOpen }: { lead: LeadDto; onOpen: () => void }) {
       />
       <DetailCell label="Направление" value={lead.serviceId ? 'Выбрано' : 'Не выбрано'} />
       <DetailCell label="Поступила" value={formatDate(lead.createdAt)} />
-      <div className="flex items-center gap-3 lg:block">
-        <div className="lg:hidden">
-          <LeadStatusBadge status={lead.status} />
-        </div>
-        <LeadStatusControl leadId={lead.id} status={lead.status} />
+      <div>
+        <LeadStatusBadge status={lead.status} />
       </div>
     </article>
   );
@@ -228,14 +264,22 @@ function DetailCell({ label, value }: { label: string; value: string }) {
 function LeadDialog({
   lead,
   error,
+  history,
+  historyError,
+  isHistoryLoading,
   isLoading,
   onOpenChange,
+  onManagerCommentDirtyChange,
   open,
 }: {
-  lead: LeadDto | undefined;
+  lead: AdminLeadDto | undefined;
   error: Error | null;
+  history: LeadStatusChangeDto[] | undefined;
+  historyError: Error | null;
+  isHistoryLoading: boolean;
   isLoading: boolean;
   onOpenChange: (open: boolean) => void;
+  onManagerCommentDirtyChange: (isDirty: boolean) => void;
   open: boolean;
 }) {
   return (
@@ -295,10 +339,58 @@ function LeadDialog({
               <label className="text-sm font-extrabold text-teal-700">Статус</label>
               <LeadStatusControl leadId={lead.id} status={lead.status} />
             </div>
+            <LeadManagerCommentForm
+              key={`${lead.id}:${lead.managerComment ?? ''}`}
+              leadId={lead.id}
+              managerComment={lead.managerComment}
+              onDirtyChange={onManagerCommentDirtyChange}
+            />
+            <StatusHistory error={historyError} isLoading={isHistoryLoading} items={history} />
           </>
         ) : null}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function StatusHistory({
+  error,
+  isLoading,
+  items,
+}: {
+  error: Error | null;
+  isLoading: boolean;
+  items: LeadStatusChangeDto[] | undefined;
+}) {
+  return (
+    <section className="border-t border-cream-200 pt-5" aria-labelledby="lead-status-history-title">
+      <h2 id="lead-status-history-title" className="text-sm font-extrabold text-teal-700">
+        История статусов
+      </h2>
+      {isLoading ? <p className="mt-2 text-sm text-muted-foreground">Загружаем историю…</p> : null}
+      {error ? (
+        <p className="mt-2 text-sm font-bold text-danger-600" role="alert">
+          Не удалось загрузить историю статусов.
+        </p>
+      ) : null}
+      {!isLoading && !error && items?.length === 0 ? (
+        <p className="mt-2 text-sm text-muted-foreground">Статус этой заявки ещё не менялся.</p>
+      ) : null}
+      {items && items.length > 0 ? (
+        <ol className="mt-3 grid gap-3">
+          {items.map((item) => (
+            <li key={item.id} className="rounded-xl bg-cream-100 p-4 text-sm">
+              <p className="font-bold text-ink">
+                {leadStatusLabels[item.fromStatus]} → {leadStatusLabels[item.toStatus]}
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                {item.manager.name} · {formatDate(item.createdAt)}
+              </p>
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </section>
   );
 }
 

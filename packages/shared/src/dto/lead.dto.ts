@@ -1,4 +1,4 @@
-import type { LeadStatus } from '../enums';
+import type { LeadStatus, Role } from '../enums';
 import type { ServiceDto } from './service.dto';
 
 /** Заявка с публичной формы сайта */
@@ -22,4 +22,22 @@ export interface LeadDto {
   serviceId: string | null;
   /** Приходит только при запросе с `include`; внутри тоже может быть null */
   service?: ServiceDto | null;
+}
+
+/** Заявка в административном API с внутренней заметкой сотрудников. */
+export interface AdminLeadDto extends LeadDto {
+  managerComment: string | null;
+}
+
+/** Неизменяемая запись о переходе заявки между статусами. */
+export interface LeadStatusChangeDto {
+  id: string;
+  fromStatus: LeadStatus;
+  toStatus: LeadStatus;
+  createdAt: string;
+  manager: {
+    id: string;
+    name: string;
+    role: Role;
+  };
 }

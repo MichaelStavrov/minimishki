@@ -73,6 +73,8 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  leadStatusChanges LeadStatusChange[]
+
   @@index([role])
 }
 
@@ -289,24 +291,44 @@ model GalleryItem {
 
 /// Заявка с публичной формы сайта
 model Lead {
-  id        String     @id @default(cuid())
-  name      String
-  phone     String
-  childName String?
-  childAge  Int?
-  comment   String?
+  id             String     @id @default(cuid())
+  name           String
+  phone          String
+  childName      String?
+  childAge       Int?
+  comment        String?
+  /// Внутренняя заметка сотрудников, недоступная публичной форме и API.
+  managerComment String?
   /// null у заявок, созданных до появления серверной фиксации согласия
-  consentedAt     DateTime?
-  consentVersion  String?
-  status    LeadStatus @default(NEW)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  consentedAt    DateTime?
+  consentVersion String?
+  status         LeadStatus @default(NEW)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
-  serviceId String?
-  service   Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  serviceId     String?
+  service       Service?           @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  statusChanges LeadStatusChange[]
 
   @@index([status, createdAt])
   @@index([serviceId])
+}
+
+/// Неизменяемая запись о фактическом переходе заявки между статусами.
+model LeadStatusChange {
+  id         String     @id @default(cuid())
+  leadId     String
+  managerId  String
+  fromStatus LeadStatus
+  toStatus   LeadStatus
+  createdAt  DateTime   @default(now())
+
+  // Restrict сохраняет доказательство того, кто совершил действие.
+  lead    Lead @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  manager User @relation(fields: [managerId], references: [id], onDelete: Restrict)
+
+  @@index([leadId, createdAt])
+  @@index([managerId])
 }
 
 /// Отзыв посетителя. Email и технический отпечаток не попадают в публичный API.

@@ -1,14 +1,17 @@
-import type { AdminLeadDto, LeadStatus } from '@minimishki/shared';
+import type { AdminLeadDto } from '@minimishki/shared';
 
 import { adminApiRequest } from '@/shared/api/admin';
 
-export async function changeLeadStatus(id: string, status: LeadStatus): Promise<AdminLeadDto> {
-  const response = await adminApiRequest<AdminLeadDto>(`/leads/${id}/status`, {
+export async function updateLeadManagerComment(
+  id: string,
+  managerComment: string | null,
+): Promise<AdminLeadDto> {
+  const response = await adminApiRequest<AdminLeadDto>(`/leads/${id}/manager-comment`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ managerComment }),
   });
 
   if (response === undefined) {

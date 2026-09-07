@@ -1,16 +1,36 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
-import { LEAD_STATUS, POLICY_VERSION, type LeadDto, type Paginated } from '@minimishki/shared';
+import {
+  LEAD_STATUS,
+  POLICY_VERSION,
+  type AdminLeadDto,
+  type LeadDto,
+  type LeadStatusChangeDto,
+  type Paginated,
+} from '@minimishki/shared';
 
 import { normalizeNullableText } from '../../common/normalize-nullable-text';
 import { toDomainError } from '../../common/prisma-error';
 import { serialize } from '../../common/serialize';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { JwtPayload } from '../../auth/auth.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { ListLeadsDto } from './dto/list-leads.dto';
+import { UpdateLeadManagerCommentDto } from './dto/update-lead-manager-comment.dto';
 import { UpdateLeadStatusDto } from './dto/update-lead-status.dto';
-import { LEAD_DETAIL_SELECT, LEAD_SELECT } from './leads.select';
+import {
+  LEAD_ADMIN_SELECT,
+  LEAD_DETAIL_SELECT,
+  LEAD_SELECT,
+  LEAD_STATUS_CHANGE_SELECT,
+} from './leads.select';
 
 const LEAD_ERROR_MESSAGES = {
   unique: 'Не удалось сохранить заявку из-за конфликта данных',
@@ -70,14 +90,14 @@ export class LeadsService {
         serviceId === null
           ? await this.prisma.lead.create({
               data,
-              select: LEAD_DETAIL_SELECT,
+              select: LEAD_SELECT,
             })
           : await this.prisma.$transaction(async (transaction) => {
               await this.ensurePublicServiceExists(transaction, serviceId);
 
               return transaction.lead.create({
                 data,
-                select: LEAD_DETAIL_SELECT,
+                select: LEAD_SELECT,
               });
             });
 
@@ -96,7 +116,7 @@ export class LeadsService {
     serviceId,
     createdFrom,
     createdTo,
-  }: ListLeadsDto): Promise<Paginated<LeadDto>> {
+  }: ListLeadsDto): Promise<Paginated<AdminLeadDto>> {
     if (createdFrom !== undefined && createdTo !== undefined && createdFrom > createdTo) {
       throw new BadRequestException('createdFrom не может быть позже createdTo');
     }
@@ -142,7 +162,7 @@ export class LeadsService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.lead.findMany({
         where,
-        select: LEAD_SELECT,
+        select: LEAD_ADMIN_SELECT,
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -158,7 +178,7 @@ export class LeadsService {
     };
   }
 
-  async findOne(id: string): Promise<LeadDto> {
+  async findOne(id: string): Promise<AdminLeadDto> {
     const lead = await this.prisma.lead.findUnique({
       where: { id },
       select: LEAD_DETAIL_SELECT,
@@ -171,13 +191,93 @@ export class LeadsService {
     return serialize(lead);
   }
 
-  async updateStatus(id: string, dto: UpdateLeadStatusDto): Promise<LeadDto> {
+  async findStatusHistory(id: string): Promise<LeadStatusChangeDto[]> {
+    const lead = await this.prisma.lead.findUnique({ where: { id }, select: { id: true } });
+
+    if (!lead) {
+      throw new NotFoundException('Заявка не найдена');
+    }
+
+    const changes = await this.prisma.leadStatusChange.findMany({
+      where: { leadId: id },
+      select: LEAD_STATUS_CHANGE_SELECT,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+
+    return serialize(changes);
+  }
+
+  async updateStatus(
+    id: string,
+    dto: UpdateLeadStatusDto,
+    manager: JwtPayload,
+  ): Promise<AdminLeadDto> {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const lead = await this.prisma.$transaction(
+          async (transaction) => {
+            const currentLead = await transaction.lead.findUnique({
+              where: { id },
+              select: { status: true },
+            });
+
+            if (!currentLead) {
+              throw new NotFoundException('Заявка не найдена');
+            }
+
+            // Повторное сохранение выбранного статуса не является переходом и не засоряет аудит.
+            if (currentLead.status === dto.status) {
+              return transaction.lead.findUniqueOrThrow({
+                where: { id },
+                select: LEAD_DETAIL_SELECT,
+              });
+            }
+
+            const updatedLead = await transaction.lead.update({
+              where: { id },
+              data: { status: dto.status },
+              select: LEAD_DETAIL_SELECT,
+            });
+
+            await transaction.leadStatusChange.create({
+              data: {
+                leadId: id,
+                managerId: manager.sub,
+                fromStatus: currentLead.status,
+                toStatus: dto.status,
+              },
+            });
+
+            return updatedLead;
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        );
+
+        return serialize(lead);
+      } catch (error) {
+        // При конкурентной смене статуса повторно читаем актуальное исходное состояние.
+        if (this.isSerializationConflict(error) && attempt < 2) continue;
+        if (this.isSerializationConflict(error)) {
+          throw new HttpException(
+            'Не удалось сохранить смену статуса. Попробуйте ещё раз.',
+            HttpStatus.SERVICE_UNAVAILABLE,
+          );
+        }
+        throw toDomainError(error, LEAD_ERROR_MESSAGES);
+      }
+    }
+
+    throw new HttpException(
+      'Не удалось сохранить смену статуса. Попробуйте ещё раз.',
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
+  }
+
+  async updateManagerComment(id: string, dto: UpdateLeadManagerCommentDto): Promise<AdminLeadDto> {
     try {
       const lead = await this.prisma.lead.update({
         where: { id },
-        data: {
-          status: dto.status,
-        },
+        data: { managerComment: normalizeNullableText(dto.managerComment) },
         select: LEAD_DETAIL_SELECT,
       });
 
@@ -211,5 +311,9 @@ export class LeadsService {
     if (services.length === 0) {
       throw new NotFoundException('Услуга не найдена');
     }
+  }
+
+  private isSerializationConflict(error: unknown): boolean {
+    return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034';
   }
 }

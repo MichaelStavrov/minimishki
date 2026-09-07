@@ -21,6 +21,7 @@ export function LeadStatusControl({ leadId, status }: Props) {
     mutationFn: (nextStatus: LeadStatus) => changeLeadStatus(leadId, nextStatus),
     onSuccess: (lead) => {
       queryClient.setQueryData(['leads', 'detail', leadId], lead);
+      void queryClient.invalidateQueries({ queryKey: ['leads', 'status-history', leadId] });
       void queryClient.invalidateQueries({ queryKey: ['leads'] });
     },
   });
