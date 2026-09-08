@@ -14,6 +14,7 @@ import { SearchModule } from './modules/search/search.module';
 import { ServicesModule } from './modules/services/services.module';
 import { SiteSettingsModule } from './modules/site-settings/site-settings.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 
@@ -30,6 +31,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     ServicesModule,
     TeachersModule,
+    UploadsModule,
     LeadsModule,
     PostsModule,
     ReviewsModule,

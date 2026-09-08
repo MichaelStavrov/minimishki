@@ -29,6 +29,7 @@ import {
   updateTeacher,
   type TeacherValues,
 } from '@/entities/teacher';
+import { uploadImage } from '@/shared/api';
 
 import {
   Button,
@@ -37,6 +38,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  ImageUploadField,
   Input,
 } from '@/shared/ui';
 
@@ -297,6 +299,7 @@ function TeacherForm({
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   function change<Key extends keyof TeacherValues>(key: Key, value: TeacherValues[Key]) {
     setValues((current) => ({ ...current, [key]: value }));
   }
@@ -305,13 +308,14 @@ function TeacherForm({
     setError('');
     setSaving(true);
     try {
+      const photoUrl = imageFile ? (await uploadImage(imageFile)).url : values.photoUrl;
       const payload = {
         ...values,
         slug: values.slug.trim(),
         fullName: values.fullName.trim(),
         position: values.position.trim(),
         bio: nullable(values.bio ?? ''),
-        photoUrl: nullable(values.photoUrl ?? ''),
+        photoUrl: nullable(photoUrl ?? ''),
       };
       if (teacher) await updateTeacher(teacher.id, payload);
       else await createTeacher(payload);
@@ -366,14 +370,13 @@ function TeacherForm({
           onChange={(event) => change('slug', event.target.value)}
         />
       </Field>
-      <Field label="URL фотографии">
-        <Input
-          type="url"
-          placeholder="https://… или /uploads/photo.jpg"
-          value={values.photoUrl ?? ''}
-          onChange={(event) => change('photoUrl', event.target.value)}
-        />
-      </Field>
+      <ImageUploadField
+        label="Фотография"
+        placeholder="https://… или /uploads/photo.jpg"
+        value={values.photoUrl ?? ''}
+        onChange={(photoUrl) => change('photoUrl', photoUrl)}
+        onFileChange={setImageFile}
+      />
       <Field label="Биография">
         <textarea
           className={textarea}

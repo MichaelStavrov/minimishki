@@ -17,6 +17,7 @@ import {
   updatePost,
   type PostValues,
 } from '@/entities/post';
+import { uploadImage } from '@/shared/api';
 
 import {
   Button,
@@ -25,6 +26,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  ImageUploadField,
   Input,
 } from '@/shared/ui';
 
@@ -234,6 +236,7 @@ function PostForm({
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   function change<Key extends keyof PostValues>(key: Key, value: PostValues[Key]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -244,7 +247,8 @@ function PostForm({
     setError('');
     setSaving(true);
     try {
-      const payload = preparePostValues(values);
+      const coverUrl = imageFile ? (await uploadImage(imageFile)).url : values.coverUrl;
+      const payload = preparePostValues({ ...values, coverUrl });
       const saved = post ? await updatePost(post.id, payload) : await createPost(payload);
       await onChanged();
       if (post) onClose();
@@ -307,14 +311,13 @@ function PostForm({
           onChange={(contentHtml) => change('contentHtml', contentHtml)}
         />
       </div>
-      <Field label="URL обложки">
-        <Input
-          type="text"
-          placeholder="https://… или /images/news/cover.jpg"
-          value={values.coverUrl ?? ''}
-          onChange={(event) => change('coverUrl', event.target.value)}
-        />
-      </Field>
+      <ImageUploadField
+        label="Обложка"
+        placeholder="https://… или /uploads/cover.jpg"
+        value={values.coverUrl ?? ''}
+        onChange={(coverUrl) => change('coverUrl', coverUrl)}
+        onFileChange={setImageFile}
+      />
       <fieldset className="grid gap-4 rounded-2xl border border-cream-200 p-5">
         <legend className="px-2 text-sm font-black text-teal-700">
           Необязательные параметры события
@@ -423,6 +426,7 @@ function GalleryEditor({ post, onChanged }: { post: PostDto; onChanged: () => Pr
   const [caption, setCaption] = useState('');
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const gallery = post.gallery ?? [];
 
   async function refresh() {
@@ -440,8 +444,9 @@ function GalleryEditor({ post, onChanged }: { post: PostDto; onChanged: () => Pr
     }
     setAdding(true);
     try {
+      const imageUrl = imageFile ? (await uploadImage(imageFile)).url : url.trim();
       await createPostGalleryItem({
-        url: url.trim(),
+        url: imageUrl,
         alt: nullable(alt),
         caption: nullable(caption),
         isPublished: true,
@@ -449,6 +454,7 @@ function GalleryEditor({ post, onChanged }: { post: PostDto; onChanged: () => Pr
         postId: post.id,
       });
       setUrl('');
+      setImageFile(null);
       setAlt('');
       setCaption('');
       await refresh();
@@ -488,12 +494,12 @@ function GalleryEditor({ post, onChanged }: { post: PostDto; onChanged: () => Pr
       </p>
       <div className="grid gap-3 rounded-xl bg-cream-50 p-4">
         <div className="grid gap-3 md:grid-cols-3">
-          <Input
-            type="text"
-            required
+          <ImageUploadField
+            label="Фотография"
+            placeholder="https://… или /uploads/photo.jpg"
             value={url}
-            placeholder="URL фотографии"
-            onChange={(event) => setUrl(event.target.value)}
+            onChange={setUrl}
+            onFileChange={setImageFile}
           />
           <Input
             value={alt}

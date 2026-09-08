@@ -12,4 +12,5 @@ export {
   DialogTrigger,
 } from './dialog';
 export { Input } from './input';
+export { ImageUploadField } from './image-upload-field';
 export { Select } from './select';

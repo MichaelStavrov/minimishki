@@ -49,6 +49,7 @@ import {
   type ScheduleValues,
   type ServiceValues,
 } from '@/entities/service';
+import { uploadImage } from '@/shared/api';
 
 import {
   Button,
@@ -57,6 +58,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  ImageUploadField,
   Input,
 } from '@/shared/ui';
 
@@ -362,6 +364,8 @@ function MainForm({
       ? { ...blank(), ...service, teacherIds: service.teachers?.map((t) => t.id) || [] }
       : blank(),
   );
+  const [uploading, setUploading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const change = <K extends keyof ServiceValues>(k: K, value: ServiceValues[K]) =>
     set((x) => ({ ...x, [k]: value }));
   return (
@@ -369,7 +373,15 @@ function MainForm({
       className="grid gap-5"
       onSubmit={(e: FormEvent) => {
         e.preventDefault();
-        void save(v);
+        void (async () => {
+          setUploading(true);
+          try {
+            const coverUrl = imageFile ? (await uploadImage(imageFile)).url : v.coverUrl;
+            await save({ ...v, coverUrl });
+          } finally {
+            setUploading(false);
+          }
+        })();
       }}
     >
       <h2 className="font-black text-teal-700">Основные данные</h2>
@@ -431,13 +443,13 @@ function MainForm({
           />
         </label>
       </div>
-      <label>
-        URL обложки
-        <Input
-          value={v.coverUrl || ''}
-          onChange={(e) => change('coverUrl', text(e.target.value))}
-        />
-      </label>
+      <ImageUploadField
+        label="Обложка"
+        placeholder="https://… или /uploads/cover.jpg"
+        value={v.coverUrl ?? ''}
+        onChange={(coverUrl) => change('coverUrl', text(coverUrl))}
+        onFileChange={setImageFile}
+      />
       <label className="font-bold">
         <input
           className="mr-2 size-4 accent-teal-600"
@@ -491,7 +503,7 @@ function MainForm({
           </label>
         </div>
       </details>
-      <Button type="submit" className="justify-self-start">
+      <Button type="submit" className="justify-self-start" disabled={uploading}>
         {service ? 'Сохранить' : 'Создать направление'}
       </Button>
     </form>
@@ -790,6 +802,8 @@ function OfferEditor({
   const [values, setValues] = useState<OfferValues | null>(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const item = offer?.offer;
   const v =
     values ??
@@ -861,8 +875,10 @@ function OfferEditor({
               try {
                 if (needsAmount && v.amount === null)
                   throw new Error('Укажите цену для выбранного типа.');
-                if (item) await updateOffer(item.id, v);
-                else await createOffer(offer.groupId, v);
+                const imageUrl = imageFile ? (await uploadImage(imageFile)).url : v.imageUrl;
+                const values = { ...v, imageUrl };
+                if (item) await updateOffer(item.id, values);
+                else await createOffer(offer.groupId, values);
                 await refresh();
                 close();
               } catch (reason) {
@@ -902,13 +918,13 @@ function OfferEditor({
               onChange={(event) => change('descriptionHtml', text(event.target.value))}
             />
           </label>
-          <label>
-            URL изображения
-            <Input
-              value={v.imageUrl ?? ''}
-              onChange={(event) => change('imageUrl', text(event.target.value))}
-            />
-          </label>
+          <ImageUploadField
+            label="Изображение"
+            placeholder="https://… или /uploads/image.jpg"
+            value={v.imageUrl ?? ''}
+            onChange={(imageUrl) => change('imageUrl', text(imageUrl))}
+            onFileChange={setImageFile}
+          />
           <div className="grid gap-4 sm:grid-cols-3">
             <label>
               Тип цены
@@ -1016,7 +1032,7 @@ function OfferEditor({
             </label>
           </div>
           {error ? <p className="rounded-xl bg-danger-100 p-3 text-danger-600">{error}</p> : null}
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving || uploading}>
             {saving ? 'Сохраняем…' : 'Сохранить'}
           </Button>
         </form>

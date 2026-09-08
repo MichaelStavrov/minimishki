@@ -2,6 +2,7 @@ import { createApiRequest } from './create-api-request';
 import { getApiUrl } from './get-api-url';
 
 export { ApiError, ApiNetworkError, ApiResponseFormatError } from './api-error';
+export { uploadImage } from './upload-image';
 export type { ApiRequestOptions } from './create-api-request';
 export type { QueryParams } from './query-params';
 

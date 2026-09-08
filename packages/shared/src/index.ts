@@ -29,6 +29,7 @@ export type {
 // Служебные обёртки и ответы API
 export type { Paginated, ApiErrorDto } from './dto/common.dto';
 export type { HealthDto } from './dto/health.dto';
+export type { UploadedImageDto } from './dto/upload.dto';
 
 // Аутентификация
 export type { LoginResponseDto } from './dto/auth.dto';

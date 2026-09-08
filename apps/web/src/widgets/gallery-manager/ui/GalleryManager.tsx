@@ -27,6 +27,7 @@ import {
   updateGalleryItem,
   type GalleryItemValues,
 } from '@/entities/gallery';
+import { uploadImage } from '@/shared/api';
 
 import {
   Button,
@@ -35,6 +36,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  ImageUploadField,
   Input,
 } from '@/shared/ui';
 
@@ -287,24 +289,26 @@ function GalleryForm({
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   function change<Key extends keyof GalleryItemValues>(key: Key, value: GalleryItemValues[Key]) {
     setValues((current) => ({ ...current, [key]: value }));
   }
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
-    const payload = {
-      ...values,
-      url: values.url.trim(),
-      alt: nullable(values.alt ?? ''),
-      caption: nullable(values.caption ?? ''),
-    };
-    if (!payload.url) {
+    if (!imageFile && !values.url.trim()) {
       setError('Укажите URL фотографии.');
       return;
     }
     setSaving(true);
     try {
+      const url = imageFile ? (await uploadImage(imageFile)).url : values.url.trim();
+      const payload = {
+        ...values,
+        url,
+        alt: nullable(values.alt ?? ''),
+        caption: nullable(values.caption ?? ''),
+      };
       if (item) await updateGalleryItem(item.id, payload);
       else await createGalleryItem(payload);
       await onChanged();
@@ -331,15 +335,13 @@ function GalleryForm({
   }
   return (
     <form className="grid gap-5" onSubmit={(event) => void save(event)}>
-      <Field label="URL фотографии">
-        <Input
-          required
-          type="text"
-          placeholder="https://… или /images/gallery/photo.jpg"
-          value={values.url}
-          onChange={(event) => change('url', event.target.value)}
-        />
-      </Field>
+      <ImageUploadField
+        label="Фотография"
+        placeholder="https://… или /uploads/photo.jpg"
+        value={values.url}
+        onChange={(url) => change('url', url)}
+        onFileChange={setImageFile}
+      />
       <Field label="Alt-текст">
         <Input
           maxLength={500}

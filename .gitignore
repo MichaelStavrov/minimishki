@@ -34,3 +34,6 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 logs/
+
+# Локальное медиа-хранилище: файлы создаёт API, в Git они не попадают.
+apps/api/uploads/
