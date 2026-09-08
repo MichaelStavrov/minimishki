@@ -11,12 +11,15 @@
     "typecheck": "tsc -p tsconfig.json --noEmit --incremental false"
   },
   "dependencies": {
-    "@hookform/resolvers": "5.9.1",
     "@dnd-kit/core": "6.3.1",
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
+    "@hookform/resolvers": "5.9.1",
     "@minimishki/shared": "workspace:*",
     "@tanstack/react-query": "^5.102.8",
+    "@tiptap/pm": "3.31.3",
+    "@tiptap/react": "3.31.3",
+    "@tiptap/starter-kit": "3.31.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "imask": "7.6.1",

@@ -64,6 +64,12 @@ export function AdminShell({ children, user }: Props) {
           >
             Педагоги
           </Link>
+          <Link
+            href="/admin/news"
+            className="rounded-full px-4 py-2 text-sm font-extrabold text-teal-700 hover:bg-teal-50"
+          >
+            Новости
+          </Link>
         </div>
       </nav>
       <main className="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 sm:py-14">{children}</main>
