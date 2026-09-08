@@ -24,6 +24,16 @@ export const configuration = () => {
     cors: {
       origin: env.WEB_ORIGIN,
     },
+    notifications: {
+      telegramBotToken: env.TELEGRAM_BOT_TOKEN,
+      telegramChatId: env.TELEGRAM_CHAT_ID,
+      smtpHost: env.SMTP_HOST,
+      smtpPort: env.SMTP_PORT,
+      smtpUser: env.SMTP_USER,
+      smtpPassword: env.SMTP_PASSWORD,
+      smtpFrom: env.SMTP_FROM,
+      staffEmail: env.NOTIFICATION_EMAIL,
+    },
   };
 };
 

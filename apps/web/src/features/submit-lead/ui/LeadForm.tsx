@@ -16,6 +16,7 @@ import { createLead } from '../api/create-lead';
 const leadFormSchema = z.object({
   name: z.string().trim().min(1, 'Введите ваше имя.').max(200, 'Имя слишком длинное.'),
   phone: z.string().regex(/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/, 'Введите номер полностью.'),
+  email: z.string().trim().email('Укажите корректный email.').max(254, 'Email слишком длинный.'),
   childName: z.string().trim().max(200, 'Имя ребёнка слишком длинное.'),
   childAge: z
     .string()
@@ -38,6 +39,7 @@ type LeadFormProps = {
 const defaultValues: LeadFormValues = {
   name: '',
   phone: '',
+  email: '',
   childName: '',
   childAge: '',
   serviceId: '',
@@ -83,6 +85,7 @@ export function LeadForm({ services }: LeadFormProps) {
       await createLead({
         name: values.name,
         phone: values.phone,
+        email: values.email.trim(),
         childName: toNullableText(values.childName),
         childAge: values.childAge === '' ? null : Number(values.childAge),
         comment: toNullableText(values.comment),
@@ -163,6 +166,18 @@ export function LeadForm({ services }: LeadFormProps) {
                 onBlur={field.onBlur}
               />
             )}
+          />
+        </FormField>
+
+        <FormField error={errors.email?.message} htmlFor="lead-email" label="Email">
+          <Input
+            id="lead-email"
+            type="email"
+            autoComplete="email"
+            aria-invalid={errors.email !== undefined}
+            disabled={isSubmitting}
+            maxLength={254}
+            {...register('email')}
           />
         </FormField>
       </div>

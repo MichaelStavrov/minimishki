@@ -25,6 +25,26 @@ enum LeadStatus {
   REJECTED // отказ
 }
 
+/// Канал доставки служебного уведомления.
+enum NotificationChannel {
+  TELEGRAM
+  EMAIL
+}
+
+/// Получатель и назначение уведомления о новой заявке.
+enum NotificationKind {
+  LEAD_CREATED_STAFF
+  LEAD_CREATED_PARENT
+}
+
+/// Состояние фоновой доставки. FAILED сохраняется для диагностики.
+enum NotificationStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
 enum ReviewStatus {
   PENDING
   PUBLISHED
@@ -311,6 +331,8 @@ model Lead {
   id             String     @id @default(cuid())
   name           String
   phone          String
+  /// Нужен для автоответа родителю и доступен только в защищённой части API.
+  email          String?
   childName      String?
   childAge       Int?
   comment        String?
@@ -326,9 +348,35 @@ model Lead {
   serviceId     String?
   service       Service?           @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   statusChanges LeadStatusChange[]
+  notificationJobs NotificationJob[]
 
   @@index([status, createdAt])
   @@index([serviceId])
+}
+
+/// Надёжная transactional-outbox очередь для внешних уведомлений о заявке.
+model NotificationJob {
+  id            String              @id @default(cuid())
+  leadId        String
+  channel       NotificationChannel
+  kind          NotificationKind
+  /// У автоответа — email родителя; у сотрудников адрес берётся из окружения при отправке.
+  recipient     String?
+  status        NotificationStatus  @default(PENDING)
+  attempts      Int                 @default(0)
+  nextAttemptAt DateTime            @default(now())
+  lockedAt      DateTime?
+  sentAt        DateTime?
+  failedAt      DateTime?
+  lastError     String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Restrict)
+
+  @@unique([leadId, channel, kind])
+  @@index([status, nextAttemptAt])
+  @@index([leadId, createdAt])
 }
 
 /// Неизменяемая запись о фактическом переходе заявки между статусами.

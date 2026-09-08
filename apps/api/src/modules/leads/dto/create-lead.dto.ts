@@ -1,5 +1,6 @@
 import {
   Equals,
+  IsEmail,
   IsBoolean,
   IsInt,
   IsOptional,
@@ -33,6 +34,12 @@ export class CreateLeadDto {
     message: 'телефон должен содержать от 7 до 15 цифр',
   })
   phone: string;
+
+  /** Адрес нужен для обязательного автоответа о принятии заявки. */
+  @IsString()
+  @MaxLength(254, { message: 'email не может быть длиннее 254 символов' })
+  @IsEmail({}, { message: 'email должен быть корректным адресом' })
+  email: string;
 
   @IsOptional()
   @IsString()

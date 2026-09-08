@@ -21,6 +21,7 @@ export const LEAD_SELECT = {
 /** Внутренний комментарий добавляется только в защищённые административные ответы. */
 export const LEAD_ADMIN_SELECT = {
   ...LEAD_SELECT,
+  email: true,
   managerComment: true,
 } satisfies Prisma.LeadSelect;
 

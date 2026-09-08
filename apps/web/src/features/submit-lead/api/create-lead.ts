@@ -5,6 +5,7 @@ import { apiRequest } from '@/shared/api';
 export type CreateLeadPayload = {
   name: string;
   phone: string;
+  email: string;
   childName: string | null;
   childAge: number | null;
   comment: string | null;

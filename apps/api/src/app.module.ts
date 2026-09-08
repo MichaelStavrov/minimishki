@@ -8,6 +8,7 @@ import { HealthModule } from './health/health.module';
 import { GalleryItemsModule } from './modules/gallery-items/gallery-items.module';
 import { PartyCatalogModule } from './modules/party-catalog/party-catalog.module';
 import { LeadsModule } from './modules/leads/leads.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SearchModule } from './modules/search/search.module';
@@ -32,6 +33,7 @@ import { UsersModule } from './users/users.module';
     ServicesModule,
     TeachersModule,
     UploadsModule,
+    NotificationsModule,
     LeadsModule,
     PostsModule,
     ReviewsModule,

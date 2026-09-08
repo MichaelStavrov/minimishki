@@ -309,6 +309,7 @@ function LeadDialog({
             </DialogHeader>
             <div className="grid gap-5 rounded-xl bg-cream-100 p-5 sm:grid-cols-2">
               <ContactItem label="Телефон" value={formatPhone(lead.phone)} />
+              <ContactItem label="Email" value={lead.email ?? 'Не указан'} />
               <ContactItem
                 label="Ребёнок"
                 value={

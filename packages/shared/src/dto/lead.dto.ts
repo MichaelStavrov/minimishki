@@ -26,6 +26,8 @@ export interface LeadDto {
 
 /** Заявка в административном API с внутренней заметкой сотрудников. */
 export interface AdminLeadDto extends LeadDto {
+  /** Email родителя виден только сотрудникам в защищённой административной части. */
+  email: string | null;
   managerComment: string | null;
 }
 

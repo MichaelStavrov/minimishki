@@ -21,6 +21,7 @@ import { toDomainError } from '../../common/prisma-error';
 import { serialize } from '../../common/serialize';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { JwtPayload } from '../../auth/auth.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { ListLeadsDto } from './dto/list-leads.dto';
 import { UpdateLeadManagerCommentDto } from './dto/update-lead-manager-comment.dto';
@@ -56,7 +57,10 @@ function getNextMoscowDayStart(date: string): Date {
 
 @Injectable()
 export class LeadsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /**
    * Публичная форма не управляет статусом заявки.
@@ -72,6 +76,7 @@ export class LeadsService {
       const data: Prisma.LeadCreateInput = {
         name: dto.name.trim(),
         phone: dto.phone.trim(),
+        email: dto.email.trim().toLowerCase(),
         childName: normalizeNullableText(dto.childName),
         childAge: dto.childAge ?? null,
         comment: normalizeNullableText(dto.comment),
@@ -86,20 +91,24 @@ export class LeadsService {
               },
       };
 
-      const lead =
-        serviceId === null
-          ? await this.prisma.lead.create({
-              data,
-              select: LEAD_SELECT,
-            })
-          : await this.prisma.$transaction(async (transaction) => {
-              await this.ensurePublicServiceExists(transaction, serviceId);
+      const lead = await this.prisma.$transaction(async (transaction) => {
+        if (serviceId !== null) {
+          await this.ensurePublicServiceExists(transaction, serviceId);
+        }
 
-              return transaction.lead.create({
-                data,
-                select: LEAD_SELECT,
-              });
-            });
+        const createdLead = await transaction.lead.create({
+          data,
+          select: LEAD_SELECT,
+        });
+
+        await this.notifications.enqueueLeadCreated(
+          transaction,
+          createdLead.id,
+          dto.email.trim().toLowerCase(),
+        );
+
+        return createdLead;
+      });
 
       return serialize(lead);
     } catch (error) {
