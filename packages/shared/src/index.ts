@@ -38,6 +38,7 @@ export { POLICY_VERSION } from './policy';
 
 // Сущности домена
 export type { UserDto } from './dto/user.dto';
+export type { SiteSettingsDto } from './dto/site-settings.dto';
 export type {
   ServiceDto,
   ServiceOfferGroupDto,

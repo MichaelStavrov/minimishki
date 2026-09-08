@@ -1,1 +1,1 @@
-export { ContactsPage as default } from '@/_pages/contacts/index.server';
+export { default } from '@/_pages/contacts/index.server';

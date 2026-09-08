@@ -1,14 +1,19 @@
 import Link from 'next/link';
+import type { SiteSettingsDto } from '@minimishki/shared';
 
 import { LeadLink } from '@/features/submit-lead';
 import { SearchForm } from '@/features/search';
+
+import { getPhoneHref } from '@/entities/site-settings';
 
 import { publicNavigation } from '@/shared/config/navigation';
 import { BrandMark, Button } from '@/shared/ui';
 
 import { MobileNavigation } from './MobileNavigation';
 
-export function Header() {
+export function Header({ settings }: { settings: SiteSettingsDto | null }) {
+  const phoneHref = getPhoneHref(settings?.phone ?? null);
+
   return (
     <header className="sticky top-0 z-50 border-b border-cream-200/80 bg-cream-50/90 backdrop-blur">
       <div className="mx-auto flex min-h-20 w-full max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
@@ -35,6 +40,15 @@ export function Header() {
         <div className="hidden xl:block">
           <SearchForm className="w-70" />
         </div>
+
+        {settings?.phone && phoneHref ? (
+          <a
+            href={phoneHref}
+            className="hidden rounded-xl px-2 py-1 text-sm font-black text-teal-700 underline decoration-honey-400 decoration-2 underline-offset-4 xl:block"
+          >
+            {settings.phone}
+          </a>
+        ) : null}
 
         <div className="hidden sm:block">
           <Button asChild className="text-base">

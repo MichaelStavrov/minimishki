@@ -45,7 +45,7 @@ export function AdminShell({ children, user }: Props) {
         </div>
       </header>
       <nav className="border-b border-cream-200 bg-background" aria-label="Разделы админки">
-        <div className="mx-auto flex max-w-7xl gap-2 px-5 py-3 sm:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap gap-2 px-5 py-3 sm:px-8">
           <Link
             href="/admin"
             className="rounded-full px-4 py-2 text-sm font-extrabold text-teal-700 hover:bg-teal-50"
@@ -77,12 +77,20 @@ export function AdminShell({ children, user }: Props) {
             Галерея
           </Link>
           {user.role === ROLE.MANAGER ? (
-            <Link
-              href="/admin/users"
-              className="rounded-full px-4 py-2 text-sm font-extrabold text-teal-700 hover:bg-teal-50"
-            >
-              Пользователи
-            </Link>
+            <>
+              <Link
+                href="/admin/users"
+                className="rounded-full px-4 py-2 text-sm font-extrabold text-teal-700 hover:bg-teal-50"
+              >
+                Пользователи
+              </Link>
+              <Link
+                href="/admin/settings"
+                className="rounded-full px-4 py-2 text-sm font-extrabold text-teal-700 hover:bg-teal-50"
+              >
+                Настройки
+              </Link>
+            </>
           ) : null}
         </div>
       </nav>

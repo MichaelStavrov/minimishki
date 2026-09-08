@@ -78,6 +78,23 @@ model User {
   @@index([role])
 }
 
+/// Единственная изменяемая конфигурация публичного сайта.
+model SiteSettings {
+  id               Int      @id
+  phone            String?
+  email            String?
+  address          String?
+  workingHours     String?
+  vkUrl            String?
+  telegramUrl      String?
+  whatsappUrl      String?
+  legalName        String?
+  inn              String?
+  privacyPolicyUrl String?
+  cookiePolicyUrl  String?
+  updatedAt        DateTime @updatedAt
+}
+
 // ============================================================
 // Услуги
 // ============================================================

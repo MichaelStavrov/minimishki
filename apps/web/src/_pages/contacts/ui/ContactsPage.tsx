@@ -1,7 +1,16 @@
+import type { SiteSettingsDto } from '@minimishki/shared';
+
+import { getLines, getPhoneHref, getSocialLinks } from '@/entities/site-settings';
+
 import { contacts } from '@/shared/config/contacts';
 import { Button, Card, CardContent, CardHeader } from '@/shared/ui';
 
-export function ContactsPage() {
+export function ContactsPage({ settings }: { settings: SiteSettingsDto | null }) {
+  const addressLines = getLines(settings?.address ?? null);
+  const workingHours = getLines(settings?.workingHours ?? null);
+  const socialLinks = settings ? getSocialLinks(settings) : [];
+  const phoneHref = getPhoneHref(settings?.phone ?? null);
+
   return (
     <main>
       <section className="relative overflow-hidden px-5 py-14 sm:px-8 sm:py-20 lg:py-24">
@@ -25,9 +34,11 @@ export function ContactsPage() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg">
-              <a href={contacts.phone.href}>Позвонить в центр</a>
-            </Button>
+            {phoneHref ? (
+              <Button asChild size="lg">
+                <a href={phoneHref}>Позвонить в центр</a>
+              </Button>
+            ) : null}
 
             <Button asChild variant="outline" size="lg">
               <a
@@ -53,7 +64,7 @@ export function ContactsPage() {
 
             <CardContent>
               <address className="text-lg leading-8 text-cream-100 not-italic">
-                {contacts.addressLines.map((line) => (
+                {addressLines.map((line) => (
                   <span key={line} className="block">
                     {line}
                   </span>
@@ -83,17 +94,19 @@ export function ContactsPage() {
 
             <CardContent>
               <div className="text-lg leading-8 text-teal-700">
-                {contacts.workingHours.map((hours) => (
+                {workingHours.map((hours) => (
                   <p key={hours}>{hours}</p>
                 ))}
               </div>
 
-              <a
-                href={contacts.phone.href}
-                className="mt-7 inline-flex text-xl font-black tracking-tight text-teal-700 underline decoration-coral-400 decoration-2 underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600/45"
-              >
-                {contacts.phone.display}
-              </a>
+              {settings?.phone && phoneHref ? (
+                <a
+                  href={phoneHref}
+                  className="mt-7 inline-flex text-xl font-black tracking-tight text-teal-700 underline decoration-coral-400 decoration-2 underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600/45"
+                >
+                  {settings.phone}
+                </a>
+              ) : null}
             </CardContent>
           </Card>
 
@@ -109,7 +122,7 @@ export function ContactsPage() {
 
             <CardContent>
               <div className="flex flex-wrap gap-3">
-                {contacts.socialLinks.map((socialLink) => (
+                {socialLinks.map((socialLink) => (
                   <Button key={socialLink.href} asChild variant="outline">
                     <a href={socialLink.href} target="_blank" rel="noreferrer">
                       {socialLink.label}

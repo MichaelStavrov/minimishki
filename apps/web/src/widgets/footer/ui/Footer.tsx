@@ -1,10 +1,17 @@
 import Link from 'next/link';
+import type { SiteSettingsDto } from '@minimishki/shared';
 
-import { contacts } from '@/shared/config/contacts';
+import { getLines, getPhoneHref, getSocialLinks } from '@/entities/site-settings';
+
 import { publicNavigation } from '@/shared/config/navigation';
 import { BrandMark } from '@/shared/ui';
 
-export function Footer() {
+export function Footer({ settings }: { settings: SiteSettingsDto | null }) {
+  const addressLines = getLines(settings?.address ?? null);
+  const workingHours = getLines(settings?.workingHours ?? null);
+  const socialLinks = settings ? getSocialLinks(settings) : [];
+  const phoneHref = getPhoneHref(settings?.phone ?? null);
+
   return (
     <footer className="mt-auto border-t border-cream-200 bg-teal-700 text-cream-50">
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[1.3fr_0.7fr_1fr] lg:py-16">
@@ -22,12 +29,14 @@ export function Footer() {
             приключениями.
           </p>
 
-          <a
-            href={contacts.phone.href}
-            className="mt-6 inline-flex rounded-full bg-cream-50 px-5 py-3 text-sm font-extrabold text-teal-700 transition-transform duration-200 outline-none hover:-translate-y-0.5 hover:shadow-soft focus-visible:ring-[3px] focus-visible:ring-honey-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700"
-          >
-            {contacts.phone.display}
-          </a>
+          {settings?.phone && phoneHref ? (
+            <a
+              href={phoneHref}
+              className="mt-6 inline-flex rounded-full bg-cream-50 px-5 py-3 text-sm font-extrabold text-teal-700 transition-transform duration-200 outline-none hover:-translate-y-0.5 hover:shadow-soft focus-visible:ring-[3px] focus-visible:ring-honey-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700"
+            >
+              {settings.phone}
+            </a>
+          ) : null}
         </div>
 
         <div>
@@ -50,35 +59,41 @@ export function Footer() {
             Ждём вас
           </h2>
 
-          <p className="mt-4 text-sm leading-6 text-cream-100">
-            {contacts.addressLines.map((line) => (
-              <span key={line} className="block">
-                {line}
-              </span>
-            ))}
-          </p>
+          {addressLines.length > 0 ? (
+            <p className="mt-4 text-sm leading-6 text-cream-100">
+              {addressLines.map((line) => (
+                <span key={line} className="block">
+                  {line}
+                </span>
+              ))}
+            </p>
+          ) : null}
 
-          <p className="mt-4 text-sm leading-6 text-cream-100">
-            {contacts.workingHours.map((hours) => (
-              <span key={hours} className="block">
-                {hours}
-              </span>
-            ))}
-          </p>
+          {workingHours.length > 0 ? (
+            <p className="mt-4 text-sm leading-6 text-cream-100">
+              {workingHours.map((hours) => (
+                <span key={hours} className="block">
+                  {hours}
+                </span>
+              ))}
+            </p>
+          ) : null}
 
-          <div className="mt-4 flex flex-wrap gap-3">
-            {contacts.socialLinks.map((socialLink) => (
-              <a
-                key={socialLink.href}
-                href={socialLink.href}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full text-sm font-bold text-cream-100 underline decoration-honey-400 decoration-2 underline-offset-4 transition-colors outline-none hover:text-honey-400 focus-visible:ring-[3px] focus-visible:ring-honey-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700"
-              >
-                {socialLink.label}
-              </a>
-            ))}
-          </div>
+          {socialLinks.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-3">
+              {socialLinks.map((socialLink) => (
+                <a
+                  key={socialLink.href}
+                  href={socialLink.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full text-sm font-bold text-cream-100 underline decoration-honey-400 decoration-2 underline-offset-4 transition-colors outline-none hover:text-honey-400 focus-visible:ring-[3px] focus-visible:ring-honey-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700"
+                >
+                  {socialLink.label}
+                </a>
+              ))}
+            </div>
+          ) : null}
         </address>
       </div>
 
@@ -86,13 +101,23 @@ export function Footer() {
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-5 py-5 text-xs font-semibold text-cream-100 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>© {new Date().getFullYear()} Детский центр «Минимишки»</p>
           <div className="flex flex-wrap gap-x-3 gap-y-1">
-            <p>ИП Ставров Михаил Николаевич · ИНН 503815758966</p>
-            <Link
-              className="underline decoration-honey-400 decoration-2 underline-offset-4"
-              href="/privacy"
-            >
-              Политика обработки данных
-            </Link>
+            {settings?.legalName || settings?.inn ? (
+              <p>
+                {[settings.legalName, settings.inn && `ИНН ${settings.inn}`]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            ) : null}
+            {settings?.privacyPolicyUrl ? (
+              <a
+                className="underline decoration-honey-400 decoration-2 underline-offset-4"
+                href={settings.privacyPolicyUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Политика обработки данных
+              </a>
+            ) : null}
           </div>
         </div>
       </div>
