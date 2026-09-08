@@ -38,7 +38,7 @@ export class ServicesController {
   }
 
   /** Административные литеральные маршруты должны находиться выше динамического :slug */
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Get('admin')
   findAllAdmin(@Query() query: ListServicesDto): Promise<Paginated<ServiceDto>> {
     return this.services.findAllAdmin(query);

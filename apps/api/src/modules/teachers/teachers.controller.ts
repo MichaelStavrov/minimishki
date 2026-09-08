@@ -38,13 +38,13 @@ export class TeachersController {
   }
 
   /** Административные литеральные маршруты должны находиться выше динамического :slug */
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Get('admin')
   findAllAdmin(@Query() query: ListTeachersDto): Promise<Paginated<TeacherDto>> {
     return this.teachers.findAllAdmin(query);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Get('admin/:id')
   findOneAdmin(@Param('id') id: string): Promise<TeacherDto> {
     return this.teachers.findOneAdmin(id);
@@ -56,13 +56,13 @@ export class TeachersController {
     return this.teachers.findPublicBySlug(slug);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Post()
   create(@Body() dto: CreateTeacherDto): Promise<TeacherDto> {
     return this.teachers.create(dto);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateTeacherDto): Promise<TeacherDto> {
     return this.teachers.update(id, dto);
@@ -72,7 +72,7 @@ export class TeachersController {
    * DELETE архивирует педагога, но контракт остаётся обычным удалением ресурса.
    * Успешный ответ не содержит тела.
    */
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   archive(@Param('id') id: string): Promise<void> {
@@ -83,7 +83,7 @@ export class TeachersController {
    * Восстановление — действие над существующим ресурсом, поэтому возвращаем 200,
    * а не стандартный для POST код 201.
    */
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Post(':id/restore')
   @HttpCode(HttpStatus.OK)
   restore(@Param('id') id: string): Promise<TeacherDto> {
