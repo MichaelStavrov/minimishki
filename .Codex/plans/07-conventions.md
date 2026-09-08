@@ -168,7 +168,7 @@ return serialize(user); // Date → строка на любой глубине,
 
 ```ts
 @Public()                        // публичный роут, токен не нужен
-@Roles(ROLE.ADMIN)               // только администратор
+@Roles(ROLE.MANAGER)             // только главный менеджер
 @Roles(ROLE.ADMIN, ROLE.MANAGER) // администратор или менеджер
 ```
 
@@ -177,11 +177,19 @@ return serialize(user); // Date → строка на любой глубине,
 | Роут | Доступ |
 |---|---|
 | `GET /api/services`, `GET /api/services/:slug` | `@Public()` — витрина сайта |
-| `POST/PATCH/DELETE /api/services` | `@Roles(ADMIN)` |
+| `POST/PATCH/DELETE /api/services` | `@Roles(ADMIN, MANAGER)` — контент |
 | `POST /api/leads` | `@Public()` — форма заявки с сайта |
 | `GET/PATCH /api/leads` | `@Roles(ADMIN, MANAGER)` |
 | `GET /api/posts`, `GET /api/posts/:slug` | `@Public()` — лента и карточка публикации |
 | Административный CRUD `/api/posts` | `@Roles(ADMIN, MANAGER)` — управление контентом |
+| `/api/users` | `@Roles(MANAGER)` — управление учётными записями |
+
+Матрица ролей закреплена так: `MANAGER` — главный менеджер с полным доступом;
+`ADMIN` — сотрудник, который обрабатывает заявки и управляет всеми текущими
+контентными разделами, но не имеет доступа к пользователям; `USER` не имеет
+доступа к административным роутам. Для нового системного раздела, настройки
+или интеграции доступ указывать только `MANAGER`; для контента и заявок — оба
+сотруднических уровня.
 
 ### Правила аутентификации
 

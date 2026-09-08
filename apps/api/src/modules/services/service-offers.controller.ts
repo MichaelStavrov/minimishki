@@ -7,7 +7,7 @@ import { CreateServiceOfferDto } from './dto/create-service-offer.dto';
 import { UpdateServiceOfferDto } from './dto/update-service-offer.dto';
 import { ServiceOffersService } from './service-offers.service';
 
-@Roles(ROLE.ADMIN)
+@Roles(ROLE.ADMIN, ROLE.MANAGER)
 @Controller('services')
 export class ServiceOffersController {
   constructor(private readonly offers: ServiceOffersService) {}

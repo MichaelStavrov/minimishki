@@ -44,7 +44,7 @@ export class ServicesController {
     return this.services.findAllAdmin(query);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Get('admin/:id')
   findOneAdmin(@Param('id') id: string): Promise<ServiceDto> {
     return this.services.findOneAdmin(id);
@@ -56,13 +56,13 @@ export class ServicesController {
     return this.services.findPublicBySlug(slug);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Post()
   create(@Body() dto: CreateServiceDto): Promise<ServiceDto> {
     return this.services.create(dto);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateServiceDto): Promise<ServiceDto> {
     return this.services.update(id, dto);
@@ -72,7 +72,7 @@ export class ServicesController {
    * DELETE архивирует услугу, но контракт остаётся обычным удалением ресурса.
    * Успешный ответ не содержит тела.
    */
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   archive(@Param('id') id: string): Promise<void> {
@@ -83,7 +83,7 @@ export class ServicesController {
    * Восстановление — действие над существующим ресурсом, поэтому возвращаем 200,
    * а не стандартный для POST код 201.
    */
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Post(':id/restore')
   @HttpCode(HttpStatus.OK)
   restore(@Param('id') id: string): Promise<ServiceDto> {

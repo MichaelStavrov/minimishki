@@ -30,38 +30,38 @@ export class PartyCatalogController {
     return this.partyCatalog.findPublic();
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Post()
   create(@Body() dto: CreatePartyCategoryDto): Promise<PartyCategoryDto> {
     return this.partyCatalog.create(dto);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdatePartyCategoryDto): Promise<PartyCategoryDto> {
     return this.partyCatalog.update(id, dto);
   }
 
-  @Roles(ROLE.ADMIN)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string): Promise<void> {
     return this.partyCatalog.remove(id);
   }
 
-  @Roles(ROLE.ADMIN) @Post(':categoryId/items') createItem(
+  @Roles(ROLE.ADMIN, ROLE.MANAGER) @Post(':categoryId/items') createItem(
     @Param('categoryId') categoryId: string,
     @Body() dto: CreatePartyItemDto,
   ) {
     return this.partyCatalog.createItem(categoryId, dto);
   }
-  @Roles(ROLE.ADMIN) @Patch('items/:id') updateItem(
+  @Roles(ROLE.ADMIN, ROLE.MANAGER) @Patch('items/:id') updateItem(
     @Param('id') id: string,
     @Body() dto: UpdatePartyItemDto,
   ) {
     return this.partyCatalog.updateItem(id, dto);
   }
-  @Roles(ROLE.ADMIN) @Delete('items/:id') @HttpCode(HttpStatus.NO_CONTENT) removeItem(
+  @Roles(ROLE.ADMIN, ROLE.MANAGER) @Delete('items/:id') @HttpCode(HttpStatus.NO_CONTENT) removeItem(
     @Param('id') id: string,
   ) {
     return this.partyCatalog.removeItem(id);

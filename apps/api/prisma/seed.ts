@@ -4,8 +4,8 @@ import { z } from 'zod';
 
 const prisma = new PrismaClient();
 
-const DEV_ADMIN_EMAIL = 'admin@minimishki.ru';
-const DEV_ADMIN_PASSWORD = 'minimishki-dev-admin';
+const DEV_MANAGER_EMAIL = 'admin@minimishki.ru';
+const DEV_MANAGER_PASSWORD = 'minimishki-dev-admin';
 
 /**
  * Seed запускается отдельным процессом и не использует Nest ConfigModule,
@@ -42,8 +42,8 @@ const seedEnvironmentSchema = z
     }
   })
   .transform((env) => ({
-    email: env.SEED_ADMIN_EMAIL ?? DEV_ADMIN_EMAIL,
-    password: env.SEED_ADMIN_PASSWORD ?? DEV_ADMIN_PASSWORD,
+    email: env.SEED_ADMIN_EMAIL ?? DEV_MANAGER_EMAIL,
+    password: env.SEED_ADMIN_PASSWORD ?? DEV_MANAGER_PASSWORD,
   }));
 
 function getAdminCredentials(): { email: string; password: string } {
@@ -58,7 +58,7 @@ function getAdminCredentials(): { email: string; password: string } {
   return result.data;
 }
 
-async function seedAdmin(): Promise<void> {
+async function seedManager(): Promise<void> {
   const credentials = getAdminCredentials();
   const passwordHash = await argon2.hash(credentials.password);
 
@@ -66,18 +66,18 @@ async function seedAdmin(): Promise<void> {
     where: { email: credentials.email },
     update: {
       passwordHash,
-      name: 'Администратор',
-      role: Role.ADMIN,
+      name: 'Главный менеджер',
+      role: Role.MANAGER,
     },
     create: {
       email: credentials.email,
       passwordHash,
-      name: 'Администратор',
-      role: Role.ADMIN,
+      name: 'Главный менеджер',
+      role: Role.MANAGER,
     },
   });
 
-  console.log(`Администратор создан или обновлён: ${credentials.email}`);
+  console.log(`Главный менеджер создан или обновлён: ${credentials.email}`);
 }
 
 async function seedServices(): Promise<Map<string, string>> {
@@ -452,7 +452,7 @@ async function seedPosts(): Promise<void> {
 async function main(): Promise<void> {
   console.log('Запуск seed...');
 
-  await seedAdmin();
+  await seedManager();
   const serviceIds = await seedServices();
   await seedTeachers(serviceIds);
   await seedPosts();

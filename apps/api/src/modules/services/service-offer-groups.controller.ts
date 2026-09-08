@@ -7,7 +7,7 @@ import { CreateServiceOfferGroupDto } from './dto/create-service-offer-group.dto
 import { UpdateServiceOfferGroupDto } from './dto/update-service-offer-group.dto';
 import { ServiceOfferGroupsService } from './service-offer-groups.service';
 
-@Roles(ROLE.ADMIN)
+@Roles(ROLE.ADMIN, ROLE.MANAGER)
 @Controller('services')
 export class ServiceOfferGroupsController {
   constructor(private readonly offerGroups: ServiceOfferGroupsService) {}

@@ -7,7 +7,7 @@ import { CreateServiceScheduleDto } from './dto/create-service-schedule.dto';
 import { UpdateServiceScheduleDto } from './dto/update-service-schedule.dto';
 import { ServiceSchedulesService } from './service-schedules.service';
 
-@Roles(ROLE.ADMIN)
+@Roles(ROLE.ADMIN, ROLE.MANAGER)
 @Controller('services')
 export class ServiceSchedulesController {
   constructor(private readonly schedules: ServiceSchedulesService) {}

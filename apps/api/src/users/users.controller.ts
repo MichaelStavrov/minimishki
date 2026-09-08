@@ -16,7 +16,7 @@ import { UsersService } from './users.service';
  * читает ValidationPipe. Стёртый импорт оставил бы в метаданных Object — валидация
  * молча перестала бы работать, без единой ошибки при запуске.
  */
-@Roles(ROLE.ADMIN)
+@Roles(ROLE.MANAGER)
 @Controller('users')
 export class UsersController {
   constructor(private readonly users: UsersService) {}

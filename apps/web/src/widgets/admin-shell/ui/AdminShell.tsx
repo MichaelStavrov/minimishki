@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { UserDto } from '@minimishki/shared';
+import { ROLE, type UserDto } from '@minimishki/shared';
 
 import { Button, BrandMark } from '@/shared/ui';
 
@@ -12,8 +12,8 @@ type Props = {
 };
 
 const roleLabels = {
-  ADMIN: 'Администратор',
-  MANAGER: 'Менеджер',
+  ADMIN: 'Администратор — заявки и контент',
+  MANAGER: 'Менеджер — полный доступ',
   USER: 'Пользователь',
 } as const;
 
@@ -76,6 +76,14 @@ export function AdminShell({ children, user }: Props) {
           >
             Галерея
           </Link>
+          {user.role === ROLE.MANAGER ? (
+            <Link
+              href="/admin/users"
+              className="rounded-full px-4 py-2 text-sm font-extrabold text-teal-700 hover:bg-teal-50"
+            >
+              Пользователи
+            </Link>
+          ) : null}
         </div>
       </nav>
       <main className="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 sm:py-14">{children}</main>
