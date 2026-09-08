@@ -13,4 +13,5 @@ export {
 } from './dialog';
 export { Input } from './input';
 export { ImageUploadField } from './image-upload-field';
+export { JsonLd } from './json-ld';
 export { Select } from './select';

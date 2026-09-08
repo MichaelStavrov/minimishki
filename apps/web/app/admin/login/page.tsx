@@ -1,4 +1,8 @@
+import type { Metadata } from 'next';
+
 import { AdminLoginPage } from '@/_pages/admin-login/index.server';
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 type Props = { searchParams: Promise<{ next?: string }> };
 

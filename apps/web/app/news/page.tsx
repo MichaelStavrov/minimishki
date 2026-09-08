@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
+
 import { NewsPage } from '@/_pages/news/index.server';
+
+export const metadata: Metadata = {
+  title: 'Новости и события',
+  description: 'Новости, анонсы событий и жизнь детского центра «Минимишки».',
+};
 
 type NewsRouteProps = { searchParams: Promise<{ page?: string | string[] }> };
 

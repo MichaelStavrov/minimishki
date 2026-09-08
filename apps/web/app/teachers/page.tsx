@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
+
 import { TeachersPage } from '@/_pages/teachers/index.server';
+
+export const metadata: Metadata = {
+  title: 'Педагоги',
+  description: 'Познакомьтесь с педагогами детского центра «Минимишки» в Пушкино.',
+};
 
 type TeachersRouteProps = {
   searchParams: Promise<{

@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
+
 import { ReviewsPage } from '@/_pages/reviews/index.server';
+
+export const metadata: Metadata = {
+  title: 'Отзывы',
+  description: 'Отзывы семей о занятиях и праздниках в детском центре «Минимишки».',
+};
 
 export default async function ReviewsRoute({
   searchParams,

@@ -1,2 +1,2 @@
 /** Версия политики, с которой посетитель соглашается при отправке формы. */
-export const POLICY_VERSION = '1.0' as const;
+export const POLICY_VERSION = '1.1' as const;

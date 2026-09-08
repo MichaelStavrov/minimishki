@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
+
 import { GalleryPage } from '@/_pages/gallery/index.server';
+
+export const metadata: Metadata = {
+  title: 'Галерея',
+  description: 'Фотографии занятий, праздников и событий в детском центре «Минимишки».',
+};
 
 type GalleryRouteProps = {
   searchParams: Promise<{ page?: string | string[] }>;

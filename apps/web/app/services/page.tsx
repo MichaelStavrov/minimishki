@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
+
 import { ServicesPage } from '@/_pages/services/index.server';
+
+export const metadata: Metadata = {
+  title: 'Занятия для детей',
+  description: 'Направления и занятия детского центра «Минимишки» в Пушкино.',
+};
 
 type ServicesRouteProps = {
   searchParams: Promise<{
