@@ -1,0 +1,17 @@
+# В образ передаётся только исходный код и необходимые манифесты.
+.git
+.Codex
+.agents
+.next
+.turbo
+node_modules
+apps/*/node_modules
+apps/api/uploads
+dist
+coverage
+*.log
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
