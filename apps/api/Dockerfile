@@ -32,6 +32,7 @@ RUN apt-get update \
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/shared ./packages/shared
+COPY --from=build /app/packages/tsconfig ./packages/tsconfig
 COPY --from=build /app/apps/api ./apps/api
 
 RUN mkdir -p /app/apps/api/uploads \

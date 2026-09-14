@@ -146,7 +146,7 @@ read -r -p "Email первого администратора: " BOOTSTRAP_ADMIN
 read -r -s -p "Пароль первого администратора: " BOOTSTRAP_ADMIN_PASSWORD
 echo
 export BOOTSTRAP_ADMIN_EMAIL BOOTSTRAP_ADMIN_PASSWORD
-docker compose --env-file .env.production -f docker-compose.production.yml --profile tools run --rm \
+docker compose --env-file .env.production -f docker-compose.production.yml --profile tools run --rm --build \
   -e BOOTSTRAP_ADMIN_EMAIL \
   -e BOOTSTRAP_ADMIN_PASSWORD \
   bootstrap-admin
