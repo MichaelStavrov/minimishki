@@ -85,10 +85,10 @@ export class NotificationsProcessor implements OnModuleInit, OnModuleDestroy {
         SELECT "id"
         FROM "NotificationJob"
         WHERE (
-          "status" = ${NotificationStatus.PENDING}
+          "status" = ${NotificationStatus.PENDING}::"NotificationStatus"
           AND "nextAttemptAt" <= NOW()
         ) OR (
-          "status" = ${NotificationStatus.PROCESSING}
+          "status" = ${NotificationStatus.PROCESSING}::"NotificationStatus"
           AND "lockedAt" < NOW() - (${lockTimeoutSeconds} * INTERVAL '1 second')
         )
         ORDER BY "nextAttemptAt" ASC, "id" ASC
@@ -97,7 +97,7 @@ export class NotificationsProcessor implements OnModuleInit, OnModuleDestroy {
       )
       UPDATE "NotificationJob"
       SET
-        "status" = ${NotificationStatus.PROCESSING},
+        "status" = ${NotificationStatus.PROCESSING}::"NotificationStatus",
         "lockedAt" = NOW(),
         "attempts" = "attempts" + 1,
         "updatedAt" = NOW()
