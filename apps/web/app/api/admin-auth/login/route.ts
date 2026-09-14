@@ -2,10 +2,11 @@ import type { LoginResponseDto } from '@minimishki/shared';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getApiUrl } from '@/shared/api/get-api-url';
+import { hasSameOrigin } from '@/shared/api/same-origin.server';
 import { ADMIN_SESSION_COOKIE } from '@/shared/config/admin-session';
 
 export async function POST(request: NextRequest) {
-  if (!hasSameOrigin(request)) {
+  if (!hasSameOrigin(request, { allowMissingOrigin: true })) {
     return NextResponse.json({ message: 'Недопустимый origin.' }, { status: 403 });
   }
 
@@ -47,11 +48,6 @@ export async function POST(request: NextRequest) {
   });
 
   return result;
-}
-
-function hasSameOrigin(request: NextRequest): boolean {
-  const origin = request.headers.get('origin');
-  return origin === null || origin === request.nextUrl.origin;
 }
 
 function isLoginResponse(value: unknown): value is LoginResponseDto {

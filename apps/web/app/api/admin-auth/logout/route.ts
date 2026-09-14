@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { hasSameOrigin } from '@/shared/api/same-origin.server';
 import { ADMIN_SESSION_COOKIE } from '@/shared/config/admin-session';
 
 export function POST(request: NextRequest) {
-  const origin = request.headers.get('origin');
-  if (origin !== null && origin !== request.nextUrl.origin) {
+  if (!hasSameOrigin(request, { allowMissingOrigin: true })) {
     return NextResponse.json({ message: 'Недопустимый origin.' }, { status: 403 });
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getApiUrl } from '@/shared/api/get-api-url';
+import { hasSameOrigin } from '@/shared/api/same-origin.server';
 import { ADMIN_SESSION_COOKIE } from '@/shared/config/admin-session';
 
 type Context = { params: Promise<{ path: string[] }> };
@@ -71,11 +72,6 @@ async function proxy(request: NextRequest, { params }: Context): Promise<NextRes
     status: response.status,
     headers: { 'Content-Type': response.headers.get('content-type') ?? 'application/json' },
   });
-}
-
-function hasSameOrigin(request: NextRequest): boolean {
-  const origin = request.headers.get('origin');
-  return origin === request.nextUrl.origin;
 }
 
 function isSafePath(path: string[]): boolean {
