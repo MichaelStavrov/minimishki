@@ -41,6 +41,24 @@ services:
     restart: 'no'
     profiles: ['tools']
 
+  bootstrap-admin:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file: .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      [
+        'node_modules/.bin/ts-node',
+        '--project',
+        'prisma/tsconfig.json',
+        'prisma/bootstrap-admin.ts',
+      ]
+    restart: 'no'
+    profiles: ['tools']
+
   web:
     build:
       context: .

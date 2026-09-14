@@ -133,6 +133,32 @@ pnpm db:studio
 
 `pnpm db:studio` запускает Prisma Studio — локальный интерфейс для просмотра и редактирования данных базы.
 
+## Первый администратор в production
+
+Demo-seed в production запрещён: он создаёт тестовый контент. Первый аккаунт
+создаётся отдельной одноразовой командой и получает роль `ADMIN`.
+
+На VPS из `/opt/minimishki` выполните:
+
+```bash
+sudo bash -c '
+read -r -p "Email первого администратора: " BOOTSTRAP_ADMIN_EMAIL
+read -r -s -p "Пароль первого администратора: " BOOTSTRAP_ADMIN_PASSWORD
+echo
+export BOOTSTRAP_ADMIN_EMAIL BOOTSTRAP_ADMIN_PASSWORD
+docker compose --env-file .env.production -f docker-compose.production.yml --profile tools run --rm \
+  -e BOOTSTRAP_ADMIN_EMAIL \
+  -e BOOTSTRAP_ADMIN_PASSWORD \
+  bootstrap-admin
+unset BOOTSTRAP_ADMIN_EMAIL BOOTSTRAP_ADMIN_PASSWORD
+'
+```
+
+Команда не выводит и не сохраняет пароль. Она сработает только при
+`NODE_ENV=production` и откажется создавать второго администратора. Для входа
+используйте страницу `https://minimishki.ru/admin/login` и введённые email с
+паролем.
+
 ## Переменные окружения
 
 ### `apps/api/.env`
