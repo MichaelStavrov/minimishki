@@ -13,7 +13,7 @@ export class NotificationsService {
       data: [
         {
           leadId,
-          channel: NotificationChannel.TELEGRAM,
+          channel: NotificationChannel.VK,
           kind: NotificationKind.LEAD_CREATED_STAFF,
         },
         {

@@ -75,8 +75,11 @@ const envSchema = z
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
     // Каналы уведомлений обязательны в production, но могут быть отключены локально.
-    TELEGRAM_BOT_TOKEN: optionalEnvString,
-    TELEGRAM_CHAT_ID: optionalEnvString,
+    VK_COMMUNITY_TOKEN: optionalEnvString,
+    VK_CHAT_PEER_ID: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.coerce.number().int().min(2_000_000_000).max(Number.MAX_SAFE_INTEGER).optional(),
+    ),
     SMTP_HOST: optionalEnvString,
     SMTP_PORT: z.preprocess(
       (value) => (value === '' ? undefined : value),
@@ -88,7 +91,7 @@ const envSchema = z
     NOTIFICATION_EMAIL: optionalEnvString,
   })
   .superRefine((env, context) => {
-    const telegramConfigured = Boolean(env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_CHAT_ID);
+    const vkConfigured = Boolean(env.VK_COMMUNITY_TOKEN || env.VK_CHAT_PEER_ID);
     const smtpFields = [
       env.SMTP_HOST,
       env.SMTP_PORT,
@@ -99,10 +102,10 @@ const envSchema = z
     ];
     const smtpConfigured = smtpFields.some(Boolean);
 
-    if (telegramConfigured && (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID)) {
+    if (vkConfigured && (!env.VK_COMMUNITY_TOKEN || !env.VK_CHAT_PEER_ID)) {
       context.addIssue({
         code: 'custom',
-        message: 'TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID должны быть заданы вместе',
+        message: 'VK_COMMUNITY_TOKEN и VK_CHAT_PEER_ID должны быть заданы вместе',
       });
     }
 
@@ -114,10 +117,10 @@ const envSchema = z
       });
     }
 
-    if (env.NODE_ENV === 'production' && (!telegramConfigured || !smtpConfigured)) {
+    if (env.NODE_ENV === 'production' && (!vkConfigured || !smtpConfigured)) {
       context.addIssue({
         code: 'custom',
-        message: 'в production должны быть настроены Telegram и SMTP-уведомления',
+        message: 'в production должны быть настроены VK и SMTP-уведомления',
       });
     }
   });

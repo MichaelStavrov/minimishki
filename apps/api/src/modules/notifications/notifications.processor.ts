@@ -2,6 +2,7 @@ import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@ne
 import { ConfigService } from '@nestjs/config';
 import { NotificationChannel, NotificationKind, NotificationStatus, Prisma } from '@prisma/client';
 import nodemailer, { type Transporter } from 'nodemailer';
+import { createHash } from 'node:crypto';
 
 import type { AppConfig } from '../../config/configuration';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -134,40 +135,48 @@ export class NotificationsProcessor implements OnModuleInit, OnModuleDestroy {
   }
 
   private async send(job: NotificationJobWithLead): Promise<void> {
-    if (job.channel === NotificationChannel.TELEGRAM) {
-      await this.sendTelegram(job);
+    if (job.channel === NotificationChannel.VK) {
+      await this.sendVk(job);
       return;
     }
 
     await this.sendEmail(job);
   }
 
-  private async sendTelegram(job: NotificationJobWithLead): Promise<void> {
+  private async sendVk(job: NotificationJobWithLead): Promise<void> {
     if (job.kind !== NotificationKind.LEAD_CREATED_STAFF) {
-      throw new Error('Telegram-автоответ родителю не поддерживается');
+      throw new Error('VK-автоответ родителю не поддерживается');
     }
 
-    const token = this.config.get('notifications.telegramBotToken', { infer: true });
-    const chatId = this.config.get('notifications.telegramChatId', { infer: true });
+    const token = this.config.get('notifications.vkCommunityToken', { infer: true });
+    const peerId = this.config.get('notifications.vkChatPeerId', { infer: true });
 
-    if (!token || !chatId) {
-      throw new Error('Telegram-уведомления не настроены');
+    if (!token || !peerId) {
+      throw new Error('VK-уведомления не настроены');
     }
 
-    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const body = new URLSearchParams({
+      access_token: token,
+      message: createStaffMessage(job),
+      peer_id: peerId.toString(),
+      random_id: createVkRandomId(job.id),
+      v: '5.199',
+    });
+
+    const response = await fetch('https://api.vk.com/method/messages.send', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: createStaffMessage(job) }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body,
       signal: AbortSignal.timeout(10_000),
     });
 
     if (!response.ok) {
-      throw new Error(`Telegram API вернул HTTP ${response.status}`);
+      throw new Error(`VK API вернул HTTP ${response.status}`);
     }
 
-    const body: unknown = await response.json();
-    if (!isTelegramSuccess(body)) {
-      throw new Error('Telegram API не подтвердил отправку сообщения');
+    const responseBody: unknown = await response.json();
+    if (!isVkSuccess(responseBody)) {
+      throw new Error(getVkErrorMessage(responseBody));
     }
   }
 
@@ -304,8 +313,38 @@ function createParentMessage(name: string): string {
   ].join('\n');
 }
 
-function isTelegramSuccess(value: unknown): value is { ok: true } {
-  return typeof value === 'object' && value !== null && 'ok' in value && value.ok === true;
+function createVkRandomId(jobId: string): string {
+  const firstEightBytes = createHash('sha256').update(jobId).digest().readBigUInt64BE();
+  const positiveInt64 = firstEightBytes & 0x7fff_ffff_ffff_ffffn;
+
+  return positiveInt64.toString();
+}
+
+function isVkSuccess(value: unknown): value is { response: number } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'response' in value &&
+    typeof value.response === 'number'
+  );
+}
+
+function getVkErrorMessage(value: unknown): string {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'error' in value &&
+    typeof value.error === 'object' &&
+    value.error !== null &&
+    'error_code' in value.error &&
+    'error_msg' in value.error &&
+    typeof value.error.error_code === 'number' &&
+    typeof value.error.error_msg === 'string'
+  ) {
+    return `VK API: ${value.error.error_code} — ${value.error.error_msg}`;
+  }
+
+  return 'VK API не подтвердил отправку сообщения';
 }
 
 function getErrorMessage(error: unknown): string {

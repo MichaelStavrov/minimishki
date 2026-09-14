@@ -25,8 +25,8 @@ export const configuration = () => {
       origin: env.WEB_ORIGIN,
     },
     notifications: {
-      telegramBotToken: env.TELEGRAM_BOT_TOKEN,
-      telegramChatId: env.TELEGRAM_CHAT_ID,
+      vkCommunityToken: env.VK_COMMUNITY_TOKEN,
+      vkChatPeerId: env.VK_CHAT_PEER_ID,
       smtpHost: env.SMTP_HOST,
       smtpPort: env.SMTP_PORT,
       smtpUser: env.SMTP_USER,
