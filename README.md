@@ -180,12 +180,14 @@ set +a
 curl --fail-with-body -X POST https://platform-api2.max.ru/subscriptions \
   -H "Authorization: $MAX_BOT_TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{\"url\":\"https://api.minimishki.ru/api/max/webhook\",\"update_types\":[\"bot_added\"],\"secret\":\"$MAX_WEBHOOK_SECRET\"}"
+  -d "{\"url\":\"https://api.minimishki.ru/api/max/webhook\",\"update_types\":[\"bot_added\",\"user_added\"],\"secret\":\"$MAX_WEBHOOK_SECRET\"}"
 '
 ```
 
 Затем добавьте бота в закрытый чат. API напишет в логи только технический
-`MAX_CHAT_ID`; внесите его в `.env.production` и перезапустите API. Токен и
+`MAX_CHAT_ID`. Если бот уже был в чате до подписки, назначьте его
+администратором и добавьте одного тестового участника: событие `user_added`
+даст тот же ID. Внесите его в `.env.production` и перезапустите API. Токен и
 секрет не выводите и не передавайте в чат. Образ API содержит официальный
 корневой сертификат Минцифры, поэтому TLS-проверка соединения с MAX не
 отключается.

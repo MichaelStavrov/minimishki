@@ -19,7 +19,7 @@ import { Public } from '../../auth/decorators/public.decorator';
 import type { AppConfig } from '../../config/configuration';
 
 const maxUpdateSchema = z.object({
-  update_type: z.string(),
+  update_type: z.enum(['bot_added', 'user_added']),
 });
 
 /** Принимает подписанные MAX-события, необходимые для получения chat_id рабочего чата. */
@@ -45,12 +45,12 @@ export class MaxWebhookController {
 
     const update = maxUpdateSchema.safeParse(body);
     const chatId = getMaxChatId(request.rawBody);
-    if (!update.success || update.data.update_type !== 'bot_added' || !chatId) {
+    if (!update.success || !chatId) {
       return;
     }
 
     // В лог выводится только технический ID, без состава чата и персональных данных.
-    this.logger.log(`MAX: бот добавлен в чат, MAX_CHAT_ID=${chatId}`);
+    this.logger.log(`MAX: ${update.data.update_type}, MAX_CHAT_ID=${chatId}`);
   }
 }
 
