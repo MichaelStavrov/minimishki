@@ -74,7 +74,7 @@ export class MaxWebhookController {
  * чтобы JavaScript не потерял точность для значений больше Number.MAX_SAFE_INTEGER.
  */
 function getMaxChatId(rawBody: Buffer | undefined): string | undefined {
-  const match = rawBody?.toString('utf8').match(/"chat_id"\s*:\s*(\d+)/);
+  const match = rawBody?.toString('utf8').match(/"chat_id"\s*:\s*(-?\d+)/);
   return match?.[1];
 }
 
