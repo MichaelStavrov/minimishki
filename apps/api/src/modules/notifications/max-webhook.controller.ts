@@ -15,6 +15,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { Request } from 'express';
 import { z } from 'zod';
 
+import { Public } from '../../auth/decorators/public.decorator';
 import type { AppConfig } from '../../config/configuration';
 
 const maxUpdateSchema = z.object({
@@ -22,6 +23,7 @@ const maxUpdateSchema = z.object({
 });
 
 /** Принимает подписанные MAX-события, необходимые для получения chat_id рабочего чата. */
+@Public()
 @Controller('max')
 export class MaxWebhookController {
   private readonly logger = new Logger(MaxWebhookController.name);
