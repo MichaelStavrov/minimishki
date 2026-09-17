@@ -79,7 +79,10 @@ const envSchema = z
     // chat_id появляется только после доставки подписанного события bot_added.
     MAX_CHAT_ID: z.preprocess(
       (value) => (value === '' ? undefined : value),
-      z.string().regex(/^\d+$/, 'MAX_CHAT_ID: положительное целое число').optional(),
+      z
+        .string()
+        .regex(/^-?[1-9]\d*$/, 'MAX_CHAT_ID: ненулевое целое число со знаком или без')
+        .optional(),
     ),
     MAX_WEBHOOK_SECRET: z.preprocess(
       (value) => (value === '' ? undefined : value),
