@@ -19,8 +19,10 @@ import { Public } from '../../auth/decorators/public.decorator';
 import type { AppConfig } from '../../config/configuration';
 
 const maxUpdateSchema = z.object({
-  update_type: z.enum(['bot_added', 'user_added']),
+  update_type: z.string().min(1).max(64),
 });
+
+const supportedUpdateTypes = new Set(['bot_added', 'user_added']);
 
 /** Принимает подписанные MAX-события, необходимые для получения chat_id рабочего чата. */
 @Public()
@@ -44,8 +46,21 @@ export class MaxWebhookController {
     }
 
     const update = maxUpdateSchema.safeParse(body);
+    if (!update.success) {
+      this.logger.warn('MAX: получено событие без корректного update_type');
+      return;
+    }
+
     const chatId = getMaxChatId(request.rawBody);
-    if (!update.success || !chatId) {
+    if (!chatId) {
+      this.logger.warn(`MAX: ${update.data.update_type}, chat_id не найден`);
+      return;
+    }
+
+    if (!supportedUpdateTypes.has(update.data.update_type)) {
+      this.logger.warn(
+        `MAX: неподдерживаемый тип ${update.data.update_type}, MAX_CHAT_ID=${chatId}`,
+      );
       return;
     }
 
