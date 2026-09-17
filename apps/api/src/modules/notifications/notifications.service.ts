@@ -13,7 +13,7 @@ export class NotificationsService {
       data: [
         {
           leadId,
-          channel: NotificationChannel.VK,
+          channel: NotificationChannel.MAX,
           kind: NotificationKind.LEAD_CREATED_STAFF,
         },
         {

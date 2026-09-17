@@ -27,7 +27,7 @@ enum LeadStatus {
 
 /// Канал доставки служебного уведомления.
 enum NotificationChannel {
-  VK
+  MAX
   EMAIL
 }
 

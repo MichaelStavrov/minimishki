@@ -2,7 +2,6 @@ import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@ne
 import { ConfigService } from '@nestjs/config';
 import { NotificationChannel, NotificationKind, NotificationStatus, Prisma } from '@prisma/client';
 import nodemailer, { type Transporter } from 'nodemailer';
-import { createHash } from 'node:crypto';
 
 import type { AppConfig } from '../../config/configuration';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -43,6 +42,7 @@ export class NotificationsProcessor implements OnModuleInit, OnModuleDestroy {
   private interval: NodeJS.Timeout | undefined;
   private isProcessing = false;
   private transporter: Transporter | undefined;
+  private lastMaxMessageSentAt = 0;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -135,48 +135,53 @@ export class NotificationsProcessor implements OnModuleInit, OnModuleDestroy {
   }
 
   private async send(job: NotificationJobWithLead): Promise<void> {
-    if (job.channel === NotificationChannel.VK) {
-      await this.sendVk(job);
+    if (job.channel === NotificationChannel.MAX) {
+      await this.sendMax(job);
       return;
     }
 
     await this.sendEmail(job);
   }
 
-  private async sendVk(job: NotificationJobWithLead): Promise<void> {
+  private async sendMax(job: NotificationJobWithLead): Promise<void> {
     if (job.kind !== NotificationKind.LEAD_CREATED_STAFF) {
-      throw new Error('VK-автоответ родителю не поддерживается');
+      throw new Error('MAX-автоответ родителю не поддерживается');
     }
 
-    const token = this.config.get('notifications.vkCommunityToken', { infer: true });
-    const peerId = this.config.get('notifications.vkChatPeerId', { infer: true });
+    const token = this.config.get('notifications.maxBotToken', { infer: true });
+    const chatId = this.config.get('notifications.maxChatId', { infer: true });
 
-    if (!token || !peerId) {
-      throw new Error('VK-уведомления не настроены');
+    if (!token || !chatId) {
+      throw new Error(
+        'MAX-уведомления не настроены: добавьте бота в рабочий чат и задайте MAX_CHAT_ID',
+      );
     }
 
-    const body = new URLSearchParams({
-      access_token: token,
-      message: createStaffMessage(job),
-      peer_id: peerId.toString(),
-      random_id: createVkRandomId(job.id),
-      v: '5.199',
-    });
+    await this.waitForMaxRateLimit();
 
-    const response = await fetch('https://api.vk.com/method/messages.send', {
+    const url = new URL('https://platform-api2.max.ru/messages');
+    url.searchParams.set('chat_id', chatId);
+
+    const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body,
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text: createStaffMessage(job) }),
       signal: AbortSignal.timeout(10_000),
     });
+    this.lastMaxMessageSentAt = Date.now();
 
     if (!response.ok) {
-      throw new Error(`VK API вернул HTTP ${response.status}`);
+      throw new Error(`MAX API вернул HTTP ${response.status}`);
     }
+  }
 
-    const responseBody: unknown = await response.json();
-    if (!isVkSuccess(responseBody)) {
-      throw new Error(getVkErrorMessage(responseBody));
+  private async waitForMaxRateLimit(): Promise<void> {
+    const delay = 500 - (Date.now() - this.lastMaxMessageSentAt);
+    if (delay > 0) {
+      await new Promise<void>((resolve) => setTimeout(resolve, delay));
     }
   }
 
@@ -311,40 +316,6 @@ function createParentMessage(name: string): string {
     'Ваша заявка в детский центр «Минимишки» принята.',
     'Мы свяжемся с вами в течение дня и поможем выбрать подходящий формат.',
   ].join('\n');
-}
-
-function createVkRandomId(jobId: string): string {
-  const firstEightBytes = createHash('sha256').update(jobId).digest().readBigUInt64BE();
-  const positiveInt64 = firstEightBytes & 0x7fff_ffff_ffff_ffffn;
-
-  return positiveInt64.toString();
-}
-
-function isVkSuccess(value: unknown): value is { response: number } {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'response' in value &&
-    typeof value.response === 'number'
-  );
-}
-
-function getVkErrorMessage(value: unknown): string {
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    'error' in value &&
-    typeof value.error === 'object' &&
-    value.error !== null &&
-    'error_code' in value.error &&
-    'error_msg' in value.error &&
-    typeof value.error.error_code === 'number' &&
-    typeof value.error.error_msg === 'string'
-  ) {
-    return `VK API: ${value.error.error_code} — ${value.error.error_msg}`;
-  }
-
-  return 'VK API не подтвердил отправку сообщения';
 }
 
 function getErrorMessage(error: unknown): string {

@@ -27,13 +27,20 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl \
+  && apt-get install -y --no-install-recommends ca-certificates openssl \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=build /app/packages/tsconfig ./packages/tsconfig
 COPY --from=build /app/apps/api ./apps/api
+
+# MAX использует цепочку с корнем Минцифры, которого нет в стандартном наборе Node.js.
+COPY apps/api/certificates/russian-trusted-root-ca.pem /usr/local/share/ca-certificates/russian-trusted-root-ca.crt
+
+RUN update-ca-certificates
+
+ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/russian-trusted-root-ca.crt
 
 RUN mkdir -p /app/apps/api/uploads \
   && chown -R node:node /app/apps/api/uploads

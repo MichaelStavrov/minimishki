@@ -75,10 +75,21 @@ const envSchema = z
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
     // Каналы уведомлений обязательны в production, но могут быть отключены локально.
-    VK_COMMUNITY_TOKEN: optionalEnvString,
-    VK_CHAT_PEER_ID: z.preprocess(
+    MAX_BOT_TOKEN: optionalEnvString,
+    // chat_id появляется только после доставки подписанного события bot_added.
+    MAX_CHAT_ID: z.preprocess(
       (value) => (value === '' ? undefined : value),
-      z.coerce.number().int().min(2_000_000_000).max(Number.MAX_SAFE_INTEGER).optional(),
+      z.string().regex(/^\d+$/, 'MAX_CHAT_ID: положительное целое число').optional(),
+    ),
+    MAX_WEBHOOK_SECRET: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z
+        .string()
+        .regex(
+          /^[A-Za-z0-9_-]{5,256}$/,
+          'MAX_WEBHOOK_SECRET: от 5 до 256 символов A-Z, a-z, 0-9, _ или -',
+        )
+        .optional(),
     ),
     SMTP_HOST: optionalEnvString,
     SMTP_PORT: z.preprocess(
@@ -91,7 +102,7 @@ const envSchema = z
     NOTIFICATION_EMAIL: optionalEnvString,
   })
   .superRefine((env, context) => {
-    const vkConfigured = Boolean(env.VK_COMMUNITY_TOKEN || env.VK_CHAT_PEER_ID);
+    const maxConfigured = Boolean(env.MAX_BOT_TOKEN || env.MAX_CHAT_ID || env.MAX_WEBHOOK_SECRET);
     const smtpFields = [
       env.SMTP_HOST,
       env.SMTP_PORT,
@@ -102,10 +113,10 @@ const envSchema = z
     ];
     const smtpConfigured = smtpFields.some(Boolean);
 
-    if (vkConfigured && (!env.VK_COMMUNITY_TOKEN || !env.VK_CHAT_PEER_ID)) {
+    if (maxConfigured && (!env.MAX_BOT_TOKEN || !env.MAX_WEBHOOK_SECRET)) {
       context.addIssue({
         code: 'custom',
-        message: 'VK_COMMUNITY_TOKEN и VK_CHAT_PEER_ID должны быть заданы вместе',
+        message: 'MAX_BOT_TOKEN и MAX_WEBHOOK_SECRET должны быть заданы вместе',
       });
     }
 
@@ -117,10 +128,10 @@ const envSchema = z
       });
     }
 
-    if (env.NODE_ENV === 'production' && (!vkConfigured || !smtpConfigured)) {
+    if (env.NODE_ENV === 'production' && (!maxConfigured || !smtpConfigured)) {
       context.addIssue({
         code: 'custom',
-        message: 'в production должны быть настроены VK и SMTP-уведомления',
+        message: 'в production должны быть настроены MAX и SMTP-уведомления',
       });
     }
   });

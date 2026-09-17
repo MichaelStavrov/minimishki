@@ -25,8 +25,9 @@ export const configuration = () => {
       origin: env.WEB_ORIGIN,
     },
     notifications: {
-      vkCommunityToken: env.VK_COMMUNITY_TOKEN,
-      vkChatPeerId: env.VK_CHAT_PEER_ID,
+      maxBotToken: env.MAX_BOT_TOKEN,
+      maxChatId: env.MAX_CHAT_ID,
+      maxWebhookSecret: env.MAX_WEBHOOK_SECRET,
       smtpHost: env.SMTP_HOST,
       smtpPort: env.SMTP_PORT,
       smtpUser: env.SMTP_USER,

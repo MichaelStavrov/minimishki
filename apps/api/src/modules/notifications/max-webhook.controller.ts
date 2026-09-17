@@ -1,0 +1,72 @@
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Post,
+  Req,
+  type RawBodyRequest,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { timingSafeEqual } from 'node:crypto';
+import type { Request } from 'express';
+import { z } from 'zod';
+
+import type { AppConfig } from '../../config/configuration';
+
+const maxUpdateSchema = z.object({
+  update_type: z.string(),
+});
+
+/** Принимает подписанные MAX-события, необходимые для получения chat_id рабочего чата. */
+@Controller('max')
+export class MaxWebhookController {
+  private readonly logger = new Logger(MaxWebhookController.name);
+
+  constructor(private readonly config: ConfigService<AppConfig, true>) {}
+
+  @Post('webhook')
+  @HttpCode(HttpStatus.OK)
+  receiveUpdate(
+    @Headers('x-max-bot-api-secret') receivedSecret: string | undefined,
+    @Body() body: unknown,
+    @Req() request: RawBodyRequest<Request>,
+  ): void {
+    const expectedSecret = this.config.get('notifications.maxWebhookSecret', { infer: true });
+
+    if (!expectedSecret || !receivedSecret || !isMatchingSecret(expectedSecret, receivedSecret)) {
+      throw new UnauthorizedException('Недопустимый секрет Webhook MAX');
+    }
+
+    const update = maxUpdateSchema.safeParse(body);
+    const chatId = getMaxChatId(request.rawBody);
+    if (!update.success || update.data.update_type !== 'bot_added' || !chatId) {
+      return;
+    }
+
+    // В лог выводится только технический ID, без состава чата и персональных данных.
+    this.logger.log(`MAX: бот добавлен в чат, MAX_CHAT_ID=${chatId}`);
+  }
+}
+
+/**
+ * JSON-число chat_id имеет тип int64. Извлекаем его из исходного тела запроса,
+ * чтобы JavaScript не потерял точность для значений больше Number.MAX_SAFE_INTEGER.
+ */
+function getMaxChatId(rawBody: Buffer | undefined): string | undefined {
+  const match = rawBody?.toString('utf8').match(/"chat_id"\s*:\s*(\d+)/);
+  return match?.[1];
+}
+
+function isMatchingSecret(expected: string, received: string): boolean {
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(received);
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+}

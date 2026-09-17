@@ -10,7 +10,7 @@ import type { AppConfig } from './config/configuration';
 import { UPLOADS_DIRECTORY } from './modules/uploads/uploads.constants';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
   const config = app.get(ConfigService<AppConfig, true>);
 
   // Все маршруты живут под /api: GET /health превращается в GET /api/health.

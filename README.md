@@ -159,6 +159,37 @@ unset BOOTSTRAP_ADMIN_EMAIL BOOTSTRAP_ADMIN_PASSWORD
 используйте страницу `https://minimishki.ru/admin/login` и введённые email с
 паролем.
 
+## Подключение MAX-уведомлений в production
+
+После первого production-запуска добавьте опубликованного MAX-бота в закрытый
+рабочий чат. До этого в неотслеживаемом `.env.production` должны быть заданы
+`MAX_BOT_TOKEN` и `MAX_WEBHOOK_SECRET`, а `MAX_CHAT_ID` следует оставить пустым.
+Секрет создайте на VPS; команда заменяет запрещённые MAX символы `+` и `/`:
+
+```bash
+openssl rand -base64 48 | tr '+/' '-_' | tr -d '\n'
+```
+
+После развёртывания создайте Webhook-подписку из `/opt/minimishki`:
+
+```bash
+sudo bash -c '
+set -a
+. ./.env.production
+set +a
+curl --fail-with-body -X POST https://platform-api2.max.ru/subscriptions \
+  -H "Authorization: $MAX_BOT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"url\":\"https://api.minimishki.ru/api/max/webhook\",\"update_types\":[\"bot_added\"],\"secret\":\"$MAX_WEBHOOK_SECRET\"}"
+'
+```
+
+Затем добавьте бота в закрытый чат. API напишет в логи только технический
+`MAX_CHAT_ID`; внесите его в `.env.production` и перезапустите API. Токен и
+секрет не выводите и не передавайте в чат. Образ API содержит официальный
+корневой сертификат Минцифры, поэтому TLS-проверка соединения с MAX не
+отключается.
+
 ## Переменные окружения
 
 ### `apps/api/.env`
