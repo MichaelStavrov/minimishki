@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { SiteSettingsDto } from '@minimishki/shared';
 
 import { LeadLink } from '@/features/submit-lead';
-import { SearchForm } from '@/features/search';
 
 import { getPhoneHref } from '@/entities/site-settings';
 
@@ -37,14 +36,10 @@ export function Header({ settings }: { settings: SiteSettingsDto | null }) {
           ))}
         </nav>
 
-        <div className="hidden xl:block">
-          <SearchForm className="w-70" />
-        </div>
-
         {settings?.phone && phoneHref ? (
           <a
             href={phoneHref}
-            className="hidden rounded-xl px-2 py-1 text-sm font-black text-teal-700 underline decoration-honey-400 decoration-2 underline-offset-4 xl:block"
+            className="hidden shrink-0 rounded-xl px-2 py-1 text-sm font-black whitespace-nowrap text-teal-700 underline decoration-honey-400 decoration-2 underline-offset-4 xl:block"
           >
             {settings.phone}
           </a>

@@ -37,7 +37,35 @@ export async function PartiesPage() {
           ) : categories.length === 0 ? (
             <State title="Готовим актуальный праздничный прайс" />
           ) : (
-            categories.map((category) => <Category key={category.id} category={category} />)
+            <>
+              <nav
+                aria-label="Разделы праздничного каталога"
+                className="mb-10 flex flex-wrap gap-3"
+              >
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`#${category.slug}`}
+                    className="rounded-full bg-teal-50 px-4 py-2 text-sm font-bold text-teal-700 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
+                  >
+                    {category.title}
+                  </Link>
+                ))}
+              </nav>
+              {categories.map((category) => (
+                <Category key={category.id} category={category} />
+              ))}
+              <div className="mt-12 rounded-3xl bg-teal-50 p-6 text-teal-700 sm:p-8">
+                <h2 className="text-2xl font-black">Обсудим ваш праздник</h2>
+                <p className="mt-3 max-w-3xl leading-7">
+                  Бронируйте время и дополнительные услуги заранее. Итоговую стоимость, доступность
+                  программы и условия проведения уточните у администратора.
+                </p>
+                <Button asChild className="mt-5">
+                  <Link href="/#lead">Обсудить праздник</Link>
+                </Button>
+              </div>
+            </>
           )}
         </div>
       </section>
@@ -46,10 +74,10 @@ export async function PartiesPage() {
 }
 function Category({ category }: { category: PartyCategoryDto }) {
   return (
-    <section className="mb-14 last:mb-0">
+    <section id={category.slug} className="mb-14 scroll-mt-40 last:mb-0">
       <h2 className="text-3xl font-black text-teal-700">{category.title}</h2>
       {category.description ? (
-        <p className="mt-3 text-lg text-teal-700">{category.description}</p>
+        <p className="mt-3 max-w-4xl text-lg leading-8 text-teal-700">{category.description}</p>
       ) : null}
       <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {category.items?.map((item) => (
@@ -57,6 +85,27 @@ function Category({ category }: { category: PartyCategoryDto }) {
             <CardHeader>
               <h3 className="text-xl font-black text-teal-700">{item.title}</h3>
               <p className="text-2xl font-black text-coral-400">{formatPrice(item)}</p>
+              {item.ageLabel !== null || item.durationMinutes !== null ? (
+                <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold text-teal-700">
+                  {item.ageLabel !== null ? (
+                    <div>
+                      <dt className="inline">Возраст: </dt>
+                      <dd className="inline">{item.ageLabel}</dd>
+                    </div>
+                  ) : null}
+                  {item.durationMinutes !== null ? (
+                    <div>
+                      <dt className="inline">Длительность: </dt>
+                      <dd className="inline">{item.durationMinutes} мин</dd>
+                    </div>
+                  ) : null}
+                </dl>
+              ) : null}
+              {item.priceNote !== null ? (
+                <p className="mt-3 text-sm leading-6 font-semibold text-teal-700">
+                  {item.priceNote}
+                </p>
+              ) : null}
             </CardHeader>
             {item.descriptionHtml !== null ? (
               <CardContent className="pt-4">

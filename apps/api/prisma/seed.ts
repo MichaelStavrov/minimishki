@@ -18,6 +18,7 @@ const DEV_MANAGER_PASSWORD = 'minimishki-dev-admin';
 const seedEnvironmentSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    SEED_DEMO_CONTENT: z.enum(['true', 'false']).default('false'),
 
     SEED_ADMIN_EMAIL: z
       .string()
@@ -44,9 +45,10 @@ const seedEnvironmentSchema = z
   .transform((env) => ({
     email: env.SEED_ADMIN_EMAIL ?? DEV_MANAGER_EMAIL,
     password: env.SEED_ADMIN_PASSWORD ?? DEV_MANAGER_PASSWORD,
+    includeDemoContent: env.SEED_DEMO_CONTENT === 'true',
   }));
 
-function getAdminCredentials(): { email: string; password: string } {
+function getSeedOptions(): { email: string; password: string; includeDemoContent: boolean } {
   const result = seedEnvironmentSchema.safeParse(process.env);
 
   if (!result.success) {
@@ -59,7 +61,7 @@ function getAdminCredentials(): { email: string; password: string } {
 }
 
 async function seedManager(): Promise<void> {
-  const credentials = getAdminCredentials();
+  const credentials = getSeedOptions();
   const passwordHash = await argon2.hash(credentials.password);
 
   await prisma.user.upsert({
@@ -452,10 +454,13 @@ async function seedPosts(): Promise<void> {
 async function main(): Promise<void> {
   console.log('Запуск seed...');
 
+  const { includeDemoContent } = getSeedOptions();
   await seedManager();
-  const serviceIds = await seedServices();
-  await seedTeachers(serviceIds);
-  await seedPosts();
+  if (includeDemoContent) {
+    const serviceIds = await seedServices();
+    await seedTeachers(serviceIds);
+    await seedPosts();
+  }
 
   console.log('Seed завершён успешно');
 }

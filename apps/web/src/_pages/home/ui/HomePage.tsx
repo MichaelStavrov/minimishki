@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from '@/shared/ui';
 
-import { getHealth } from '../api/get-health';
 import { getServices } from '../api/get-services';
 import { getTeachers } from '../api/get-teachers';
 
@@ -25,11 +24,7 @@ const promises = [
 ] as const;
 
 export async function HomePage() {
-  const [health, services, teachers] = await Promise.all([
-    loadHealth(),
-    loadServices(),
-    loadTeachers(),
-  ]);
+  const [services, teachers] = await Promise.all([loadServices(), loadTeachers()]);
 
   return (
     <main>
@@ -319,26 +314,9 @@ export async function HomePage() {
             <LeadForm services={services} />
           </div>
         </div>
-
-        <p
-          className="mx-auto mt-8 w-full max-w-7xl text-center text-xs font-semibold text-teal-700/70"
-          aria-live="polite"
-        >
-          {health
-            ? 'Сайт связан с работающей системой центра.'
-            : 'Сайт работает в режиме обновления данных центра.'}
-        </p>
       </section>
     </main>
   );
-}
-
-async function loadHealth() {
-  try {
-    return await getHealth();
-  } catch {
-    return undefined;
-  }
 }
 
 async function loadServices(): Promise<ServiceDto[]> {

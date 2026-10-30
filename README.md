@@ -92,14 +92,15 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 Файлы `.env` и `.env.local` не попадают в Git: в них могут находиться секреты и локальные адреса.
 
-### 4. Применить миграции и добавить demo-данные
+### 4. Применить миграции и создать локального администратора
 
 ```bash
 pnpm db:migrate
 pnpm db:seed
 ```
 
-Seed создаёт администратора и демонстрационные данные. Для локальной разработки используются значения `SEED_ADMIN_EMAIL` и `SEED_ADMIN_PASSWORD` из `apps/api/.env`.
+Seed создаёт локального администратора. Для локальной разработки используются значения `SEED_ADMIN_EMAIL` и `SEED_ADMIN_PASSWORD` из `apps/api/.env`.
+Демонстрационный контент по умолчанию отключён. Создавать его можно только в отдельной тестовой базе, явно задав `SEED_DEMO_CONTENT=true`.
 
 ### 5. Запустить frontend и API
 
@@ -203,6 +204,7 @@ curl --fail-with-body -X POST https://platform-api2.max.ru/subscriptions \
 | `JWT_EXPIRES_IN`      | Срок действия JWT, например `30d`                          |
 | `SEED_ADMIN_EMAIL`    | Email администратора для локального demo-seed              |
 | `SEED_ADMIN_PASSWORD` | Пароль администратора для локального demo-seed             |
+| `SEED_DEMO_CONTENT`   | Создавать демонстрационный контент; по умолчанию `false`   |
 | `WEB_ORIGIN`          | Origin frontend для CORS, локально `http://localhost:3000` |
 | `PORT`                | Порт API, локально `3001`                                  |
 | `NODE_ENV`            | Окружение: `development`, `production` или `test`          |
