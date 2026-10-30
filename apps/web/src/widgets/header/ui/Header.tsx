@@ -9,6 +9,7 @@ import { publicNavigation } from '@/shared/config/navigation';
 import { BrandMark, Button } from '@/shared/ui';
 
 import { MobileNavigation } from './MobileNavigation';
+import { NavigationLink } from './NavigationLink';
 
 export function Header({ settings }: { settings: SiteSettingsDto | null }) {
   const phoneHref = getPhoneHref(settings?.phone ?? null);
@@ -26,13 +27,13 @@ export function Header({ settings }: { settings: SiteSettingsDto | null }) {
 
         <nav aria-label="Основная навигация" className="hidden items-center gap-1 lg:flex">
           {publicNavigation.map((item) => (
-            <Link
+            <NavigationLink
               key={item.href}
               href={item.href}
               className="rounded-full px-3 py-2 text-base font-extrabold text-teal-700 transition-colors hover:bg-teal-50 hover:text-teal-600"
             >
               {item.label}
-            </Link>
+            </NavigationLink>
           ))}
         </nav>
 

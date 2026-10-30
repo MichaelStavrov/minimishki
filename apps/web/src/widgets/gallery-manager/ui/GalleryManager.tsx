@@ -27,8 +27,8 @@ import {
   updateGalleryItem,
   type GalleryItemValues,
 } from '@/entities/gallery';
-import { uploadImage } from '@/shared/api';
 
+import { uploadImage } from '@/shared/api';
 import {
   Button,
   Dialog,
@@ -38,6 +38,7 @@ import {
   DialogTitle,
   ImageUploadField,
   Input,
+  Select,
 } from '@/shared/ui';
 
 const blank = (): GalleryItemValues => ({
@@ -113,24 +114,26 @@ export function GalleryManager() {
         </div>
         <Button onClick={() => setCreating(true)}>Добавить фотографию</Button>
       </header>
-      <div className="mt-6 flex flex-wrap gap-4 rounded-2xl border border-cream-200 bg-background p-4">
-        <Input
-          className="max-w-md"
-          value={search}
-          placeholder="Поиск по URL, alt-тексту или подписи"
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        <label className="grid gap-1 text-sm font-bold text-teal-700">
+      <div className="mt-6 flex flex-wrap items-end gap-4 rounded-2xl border border-cream-200 bg-background p-4">
+        <label className="grid w-full min-w-0 gap-1 text-sm font-bold text-teal-700 sm:max-w-md">
+          Поиск
+          <Input
+            className="font-normal"
+            value={search}
+            placeholder="Поиск по URL, alt-тексту или подписи"
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </label>
+        <label className="grid w-full gap-1 text-sm font-bold text-teal-700 sm:w-44">
           Статус
-          <select
-            className="h-11 rounded-xl border-2 border-input bg-background px-3 outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
+          <Select
             value={publication}
             onChange={(event) => setPublication(event.target.value as typeof publication)}
           >
             <option value="ALL">Все</option>
             <option value="PUBLISHED">На сайте</option>
             <option value="HIDDEN">Скрытые</option>
-          </select>
+          </Select>
         </label>
       </div>
       <p className="mt-4 text-sm text-muted-foreground">

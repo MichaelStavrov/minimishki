@@ -1,12 +1,13 @@
 'use client';
 
 import { useRef } from 'react';
-import Link from 'next/link';
 
 import { LeadLink } from '@/features/submit-lead';
 
 import { publicNavigation } from '@/shared/config/navigation';
 import { Button } from '@/shared/ui';
+
+import { NavigationLink } from './NavigationLink';
 
 export function MobileNavigation() {
   const detailsRef = useRef<HTMLDetailsElement>(null);
@@ -32,14 +33,14 @@ export function MobileNavigation() {
         className="absolute top-14 right-0 flex w-[min(18rem,calc(100vw-2.5rem))] flex-col gap-1 rounded-2xl border border-cream-200 bg-cream-50 p-3 shadow-lifted"
       >
         {publicNavigation.map((item) => (
-          <Link
+          <NavigationLink
             key={item.href}
             href={item.href}
             onClick={closeMenu}
             className="rounded-xl px-4 py-3 text-base font-extrabold text-teal-700 transition-colors hover:bg-teal-50"
           >
             {item.label}
-          </Link>
+          </NavigationLink>
         ))}
         <Button asChild className="mt-2 w-full text-base">
           <LeadLink onClick={closeMenu}>Записаться</LeadLink>
