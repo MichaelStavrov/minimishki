@@ -26,15 +26,21 @@ const leadFormSchema = z.object({
       'Укажите целый возраст от 0 до 18 лет.',
     ),
   serviceId: z.string(),
+  preferredDate: z.union([z.literal(''), z.iso.date({ error: 'Укажите корректную дату.' })]),
   comment: z.string().trim().max(5000, 'Комментарий слишком длинный.'),
   consent: z.boolean().refine((value) => value, 'Нужно согласие на обработку персональных данных.'),
 });
 
 type LeadFormValues = z.infer<typeof leadFormSchema>;
+type PartySelection = { program: string | null };
 
-type LeadFormProps = {
-  services: Pick<ServiceDto, 'id' | 'title'>[];
-};
+type LeadFormProps =
+  | { services: Pick<ServiceDto, 'id' | 'title'>[]; party?: never }
+  | { services?: never; party: { selection: PartySelection; clearProgram: () => void } };
+
+const partyFormSchema = leadFormSchema.extend({
+  comment: z.string().trim().max(4500, 'Комментарий слишком длинный.'),
+});
 
 const defaultValues: LeadFormValues = {
   name: '',
@@ -43,15 +49,20 @@ const defaultValues: LeadFormValues = {
   childName: '',
   childAge: '',
   serviceId: '',
+  preferredDate: '',
   comment: '',
   consent: false,
 };
 
-export function LeadForm({ services }: LeadFormProps) {
-  const [isSuccess, setIsSuccess] = useState(false);
+export function LeadForm({ services, party }: LeadFormProps) {
+  const [success, setSuccess] = useState<{ selection: PartySelection | undefined } | null>(null);
+  const isParty = party !== undefined;
+  const selection = party?.selection;
+  const program = selection?.program ?? null;
+  const fieldPrefix = isParty ? 'party_lead' : 'lead';
 
   useEffect(() => {
-    if (window.location.hash !== '#lead') {
+    if (isParty || window.location.hash !== '#lead') {
       return;
     }
 
@@ -64,7 +75,7 @@ export function LeadForm({ services }: LeadFormProps) {
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [isParty]);
 
   const {
     control,
@@ -75,11 +86,11 @@ export function LeadForm({ services }: LeadFormProps) {
     setError,
   } = useForm<LeadFormValues>({
     defaultValues,
-    resolver: zodResolver(leadFormSchema),
+    resolver: zodResolver(isParty ? partyFormSchema : leadFormSchema),
   });
 
   async function onSubmit(values: LeadFormValues) {
-    setIsSuccess(false);
+    setSuccess(null);
 
     try {
       await createLead({
@@ -88,11 +99,12 @@ export function LeadForm({ services }: LeadFormProps) {
         email: values.email.trim(),
         childName: toNullableText(values.childName),
         childAge: values.childAge === '' ? null : Number(values.childAge),
-        comment: toNullableText(values.comment),
+        comment: toNullableText(isParty ? getPartyComment(values, program) : values.comment),
         serviceId: toNullableText(values.serviceId),
         consent: true,
       });
-      setIsSuccess(true);
+      if (isParty) reset();
+      setSuccess({ selection });
     } catch (error: unknown) {
       setError('root', {
         message:
@@ -107,7 +119,7 @@ export function LeadForm({ services }: LeadFormProps) {
     void handleSubmit(onSubmit)(event);
   }
 
-  if (isSuccess) {
+  if (success && success.selection === selection) {
     return (
       <div
         className="rounded-2xl border border-honey-400/50 bg-honey-100 p-6 text-teal-700"
@@ -121,7 +133,8 @@ export function LeadForm({ services }: LeadFormProps) {
           className="mt-4 px-0"
           onClick={() => {
             reset();
-            setIsSuccess(false);
+            party?.clearProgram();
+            setSuccess(null);
           }}
         >
           Отправить ещё одну заявку
@@ -132,25 +145,41 @@ export function LeadForm({ services }: LeadFormProps) {
 
   return (
     <form className="grid gap-5" noValidate onSubmit={handleFormSubmit}>
+      {party && program ? (
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl bg-teal-50 px-4 py-2">
+          <p className="min-w-0 text-sm wrap-anywhere text-teal-700">
+            Программа: <strong>{program}</strong>
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={isSubmitting}
+            onClick={party.clearProgram}
+          >
+            Убрать программу
+          </Button>
+        </div>
+      ) : null}
       <div className="grid gap-5 sm:grid-cols-2">
-        <FormField error={errors.name?.message} htmlFor="lead-name" label="Ваше имя">
+        <FormField error={errors.name?.message} htmlFor={`${fieldPrefix}-name`} label="Ваше имя">
           <Input
-            id="lead-name"
+            {...fieldAttributes(`${fieldPrefix}-name`, errors.name)}
             autoComplete="name"
-            aria-invalid={errors.name !== undefined}
+            required
             disabled={isSubmitting}
             maxLength={200}
             {...register('name')}
           />
         </FormField>
 
-        <FormField error={errors.phone?.message} htmlFor="lead-phone" label="Телефон">
+        <FormField error={errors.phone?.message} htmlFor={`${fieldPrefix}-phone`} label="Телефон">
           <Controller
             control={control}
             name="phone"
             render={({ field }) => (
               <IMaskInput
-                id="lead-phone"
+                {...fieldAttributes(`${fieldPrefix}-phone`, errors.phone)}
                 mask="+{7} (000) 000-00-00"
                 lazy={false}
                 placeholderChar="_"
@@ -159,7 +188,7 @@ export function LeadForm({ services }: LeadFormProps) {
                 type="tel"
                 autoComplete="tel"
                 inputMode="tel"
-                aria-invalid={errors.phone !== undefined}
+                required
                 disabled={isSubmitting}
                 className="flex h-11 w-full rounded-xl border-2 border-input bg-background px-4 py-2 text-base text-foreground shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus:border-teal-600 focus:ring-4 focus:ring-teal-100 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:focus:ring-danger-100"
                 onAccept={(value) => field.onChange(value)}
@@ -169,71 +198,107 @@ export function LeadForm({ services }: LeadFormProps) {
           />
         </FormField>
 
-        <FormField error={errors.email?.message} htmlFor="lead-email" label="Email">
+        <FormField
+          error={errors.email?.message}
+          htmlFor={`${fieldPrefix}-email`}
+          label={isParty ? 'Email для подтверждения' : 'Email'}
+        >
           <Input
-            id="lead-email"
+            {...fieldAttributes(`${fieldPrefix}-email`, errors.email)}
             type="email"
             autoComplete="email"
-            aria-invalid={errors.email !== undefined}
+            required
             disabled={isSubmitting}
             maxLength={254}
             {...register('email')}
           />
         </FormField>
+        {isParty ? (
+          <FormField
+            error={errors.preferredDate?.message}
+            htmlFor={`${fieldPrefix}-date`}
+            label="Желаемая дата (необязательно)"
+          >
+            <Input
+              {...fieldAttributes(`${fieldPrefix}-date`, errors.preferredDate)}
+              type="date"
+              disabled={isSubmitting}
+              {...register('preferredDate')}
+            />
+          </FormField>
+        ) : null}
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <FormField error={errors.childName?.message} htmlFor="lead-child-name" label="Имя ребёнка">
-          <Input
-            id="lead-child-name"
-            autoComplete="off"
-            aria-invalid={errors.childName !== undefined}
-            disabled={isSubmitting}
-            maxLength={200}
-            {...register('childName')}
-          />
-        </FormField>
+      {!isParty ? (
+        <>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormField
+              error={errors.childName?.message}
+              htmlFor="lead-child-name"
+              label="Имя ребёнка"
+            >
+              <Input
+                {...fieldAttributes('lead-child-name', errors.childName)}
+                autoComplete="off"
+                disabled={isSubmitting}
+                maxLength={200}
+                {...register('childName')}
+              />
+            </FormField>
 
-        <FormField
-          error={errors.childAge?.message}
-          htmlFor="lead-child-age"
-          label="Возраст ребёнка"
-        >
-          <Input
-            id="lead-child-age"
-            type="number"
-            inputMode="numeric"
-            min="0"
-            max="18"
-            aria-invalid={errors.childAge !== undefined}
-            disabled={isSubmitting}
-            {...register('childAge')}
-          />
-        </FormField>
-      </div>
+            <FormField
+              error={errors.childAge?.message}
+              htmlFor="lead-child-age"
+              label="Возраст ребёнка"
+            >
+              <Input
+                {...fieldAttributes('lead-child-age', errors.childAge)}
+                type="number"
+                inputMode="numeric"
+                min="0"
+                max="18"
+                disabled={isSubmitting}
+                {...register('childAge')}
+              />
+            </FormField>
+          </div>
+
+          <FormField
+            error={errors.serviceId?.message}
+            htmlFor="lead-service"
+            label="Интересующее направление"
+          >
+            <Select
+              {...fieldAttributes('lead-service', errors.serviceId)}
+              disabled={isSubmitting}
+              {...register('serviceId')}
+            >
+              <option value="">Помогите выбрать</option>
+              {services?.map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.title}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+        </>
+      ) : null}
 
       <FormField
-        error={errors.serviceId?.message}
-        htmlFor="lead-service"
-        label="Интересующее направление"
+        error={errors.comment?.message}
+        htmlFor={`${fieldPrefix}-comment`}
+        label="Комментарий"
       >
-        <Select id="lead-service" disabled={isSubmitting} {...register('serviceId')}>
-          <option value="">Помогите выбрать</option>
-          {services.map((service) => (
-            <option key={service.id} value={service.id}>
-              {service.title}
-            </option>
-          ))}
-        </Select>
-      </FormField>
-
-      <FormField error={errors.comment?.message} htmlFor="lead-comment" label="Комментарий">
         <textarea
-          id="lead-comment"
+          {...fieldAttributes(`${fieldPrefix}-comment`, errors.comment)}
           className="flex min-h-28 w-full resize-y rounded-xl border-2 border-input bg-background px-4 py-3 text-base text-foreground shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus:border-teal-600 focus:ring-4 focus:ring-teal-100 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:focus:ring-danger-100"
           disabled={isSubmitting}
-          maxLength={5000}
-          placeholder="Например, когда вам удобно прийти или что особенно интересно ребёнку"
+          maxLength={isParty ? 4500 : 5000}
+          placeholder={
+            isParty
+              ? 'Например, сколько будет гостей и что нравится ребёнку'
+              : 'Например, когда вам удобно прийти или что особенно интересно ребёнку'
+          }
           {...register('comment')}
         />
       </FormField>
@@ -241,9 +306,11 @@ export function LeadForm({ services }: LeadFormProps) {
       <div>
         <label className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-teal-700">
           <input
+            {...fieldAttributes(`${fieldPrefix}-consent`, errors.consent)}
             type="checkbox"
             className="mt-1 size-4 accent-teal-600"
             disabled={isSubmitting}
+            required
             {...register('consent')}
           />
           <span>
@@ -258,7 +325,11 @@ export function LeadForm({ services }: LeadFormProps) {
           </span>
         </label>
         {errors.consent?.message ? (
-          <p className="mt-2 text-sm font-bold text-danger-600" role="alert">
+          <p
+            id={`${fieldPrefix}-consent-error`}
+            className="mt-2 text-sm font-bold text-danger-600"
+            role="alert"
+          >
             {errors.consent.message}
           </p>
         ) : null}
@@ -280,6 +351,17 @@ export function LeadForm({ services }: LeadFormProps) {
   );
 }
 
+function getPartyComment({ preferredDate, comment }: LeadFormValues, program: string | null) {
+  return [
+    'Детский праздник',
+    program ? `Программа: ${program}` : null,
+    preferredDate ? `Желаемая дата: ${preferredDate.split('-').reverse().join('.')}` : null,
+    comment,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 type FormFieldProps = {
   children: ReactNode;
   error?: string;
@@ -295,12 +377,20 @@ function FormField({ children, error, htmlFor, label }: FormFieldProps) {
       </label>
       {children}
       {error ? (
-        <p className="text-sm font-bold text-danger-600" role="alert">
+        <p id={`${htmlFor}-error`} className="text-sm font-bold text-danger-600" role="alert">
           {error}
         </p>
       ) : null}
     </div>
   );
+}
+
+function fieldAttributes(id: string, error?: { message?: string }) {
+  return {
+    id,
+    'aria-invalid': error !== undefined,
+    'aria-describedby': error?.message ? `${id}-error` : undefined,
+  };
 }
 
 function toNullableText(value: string): string | null {
